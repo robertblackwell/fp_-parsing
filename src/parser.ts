@@ -146,6 +146,18 @@ function movePastMultChar(s: string): string {
     }
     return s
 }
+/**
+ * Move past the expected "*" sign. 
+ * Advances the string if successfull
+ * returns the input string if failed
+ */
+function movePastChar(ch: string, s: string): string {
+    let s2 = removeLeadingWhitespace(s)
+    if(s2.substring(0, 1) == ch) {
+        return removeLeadingWhitespace(s2.substring(1))
+    }
+    return s
+}
 
 function removeLeadingWhitespace(s: string): string {
     if((s.length > 0) && (s.substring(0, 1) == " ")) {
@@ -176,6 +188,33 @@ function parser_or(ps: Array<(s: string) => ParserResult>, input: string): Parse
     }
     return r
 }
+
+/**
+ * Parses <p1> <op> <p2>
+ */
+function parser_binary(op: string, p1: Parser, p2: Parser, sinput: string): Parser {
+    function pp(sinput: string) {
+        const s = removeLeadingWhitespace(sinput)
+        let r1 = p1(s)
+        if(failed(r1)) {
+            return make_result(null, sinput.slice(0))
+        }
+        let fnode = r1.ast as Tree.TreeNode
+        const mult = movePastChar(op, r1.rem)
+        if(mult == r1.rem) {
+            return make_result(null, sinput.slice(0))
+        }
+        const rest: string = mult as string
+        let r2 = p2(mult)
+        if(failed(r2)) {
+            return make_result(null, sinput.slice(0))
+        }
+        let tnode = r2.ast as Tree.TreeNode
+        return make_result(Tree.MultNode.make(fnode, tnode), r2.rem)
+        }
+    return pp
+}
+
 
 export function test_parser() {
     test_add()
