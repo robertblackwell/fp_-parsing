@@ -4,6 +4,12 @@ type Ast = Tree.TreeNode | null
 
 type ParserResult = {ast: Ast, rem: string}
 
+function make_result(ast: Ast, rem: string) {
+    return {ast, rem}
+}
+
+type Parser = (s: string) => ParserResult
+
 function isDone(r: ParserResult): boolean {
     return (r.rem.length == 0)
 }
@@ -26,12 +32,12 @@ function expression(sinput: string): ParserResult {
     const rest: string = plus as string
     let exp = expression(plus)
     if(failed(exp)) {
-        return {ast: null, rem: plus}
+        return make_result(null, plus)
     }
     const expnode = exp.ast as Tree.TreeNode
     let newast = Tree.AddNode.make(tnode, expnode)
 
-    return {ast: newast, rem: exp.rem}
+    return make_result(newast, exp.rem)
 }
 
 function term(sinput: string): ParserResult {
@@ -51,21 +57,26 @@ function term(sinput: string): ParserResult {
         return {ast: null, rem: rest}
     }
     let tnode = t.ast as Tree.TreeNode
-    return {ast: Tree.MultNode.make(fnode, tnode), rem: t.rem}
+    return make_result(Tree.MultNode.make(fnode, tnode), t.rem)
 }
 
-function factor(sinput: string): ParserResult {
+function factor_old(sinput: string): ParserResult {
     const s = removeLeadingWhitespace(sinput)
     const nn = anumber(s)
     if(failed(nn)) {
         const brack = bracket(s)
         if(failed(brack)) {
-            return{ast: null, rem: s}
+            return make_result (null, s)
         }
         const bnode = brack.ast as Tree.TreeNode
-        return {ast: bnode, rem:brack.rem}
+        return make_result(bnode, brack.rem)
     }
     return nn
+}
+
+function factor(sinput: string): ParserResult {
+    const s = removeLeadingWhitespace(sinput)
+    return parser_or([anumber, bracket], s)
 }
 
 function bracket(s: string): ParserResult {
@@ -75,15 +86,15 @@ function bracket(s: string): ParserResult {
     }
     const exp = expression(s.slice(1))
     if(failed(exp)) {
-        return {ast: null, rem: s.slice(1)}
+        return make_result(null, s.slice(1))
     }
     if(exp.rem.substring(0,1) != ")") {
-        return {ast: null, rem: exp.rem.slice(0)}
+        return make_result(null, exp.rem.slice(0))
     }
     const rem = exp.rem.slice(1)
     const newexpnode = exp.ast as Tree.TreeNode
     const rnode = Tree.BracketNode.make(newexpnode)
-    return{ast: rnode, rem: rem}
+    return make_result(rnode, rem)
 }
 
 function anumber(s: string) : ParserResult {
@@ -108,7 +119,7 @@ function anumber(s: string) : ParserResult {
         return {ast: null, rem: s}
     } else {
         const numnode = Tree.NumberNode.make(parseInt(numstr))
-        return {ast: numnode, rem: rem}
+        return make_result(numnode, rem)
     }
 }
 /**
@@ -142,11 +153,37 @@ function removeLeadingWhitespace(s: string): string {
     }
     return s.slice(0)
 }
+
+/**
+ * This function applies p1 and if it succedds returns its result 
+ * if p1 fails p2 is applied 
+ */
+function parser_or2(p1: Parser, p2: Parser, input: string): ParserResult {
+    return parser_or([p1, p2], input)
+    // const r1 = p1(input)
+    // if(failed(r1)) {
+    //     const r2 = p2(input)
+    //     if(failed(r2)) {
+    //         return {ast: null, rem: input.slice(0)}
+    //     }
+    // }
+    // return r1
+}
+function parser_or(ps: Array<(s: string) => ParserResult>, input: string): ParserResult {
+    const r = ps[0](input)
+    if(failed(r)) {
+        return parser_or(ps.slice(1), input)
+    }
+    return r
+}
+
 export function test_parser() {
     test_add()
     test_whitespace()
     test_anumber() 
 }
+
+
 function test_whitespace() {
     let ss = " 1234"
     const ss2 = removeLeadingWhitespace(ss)
