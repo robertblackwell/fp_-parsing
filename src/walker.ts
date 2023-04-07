@@ -1,113 +1,5 @@
 import * as Tree from "./tree"
 
-// type TreeNodeType = "number" | "bracket" | "add" | "mult"
-// abstract class TreeNode {
-//     node_type: TreeNodeType
-//     constructor(t: TreeNodeType) {
-//         this.node_type = t
-//     }
-// }
-// class NumberNode extends TreeNode {
-//     value: number
-//     constructor(v: number) {
-//         super("number")
-//         this.value = v
-//     }
-//     static make(v: number): NumberNode {
-//         return new NumberNode(v)
-//     }
-// }
-// class BracketNode extends TreeNode {
-//     child: TreeNode
-//     constructor(c: TreeNode) {
-//         super("bracket")
-//         this.child = c
-//     }
-//     static make(c: TreeNode): BracketNode {
-//         return new BracketNode(c)
-//     }
-// }
-// class AddNode extends TreeNode {
-//     left: TreeNode;
-//     right: TreeNode
-//     constructor(left: TreeNode, right: TreeNode) {
-//         super("add")
-//         this.left = left
-//         this.right = right
-//     }
-//     static make(left: TreeNode, right: TreeNode): AddNode {
-//         return new AddNode(left, right)
-//     }
-// }
-// class MultNode extends TreeNode {
-//     left: TreeNode;
-//     right: TreeNode
-//     constructor(left: TreeNode, right: TreeNode) {
-//         super("mult")
-//         this.left = left
-//         this.right = right
-//     }
-//     static make(left: TreeNode, right: TreeNode): MultNode {
-//         return new MultNode(left, right)
-//     }
-// }
-
-// export const expression_comment = "this is an export value"
-
-// function isNumberNode(n: TreeNode): boolean {
-//     return (n instanceof(NumberNode))
-//     return ("value" in n)
-// }
-// function isBracketNode(n: TreeNode): boolean {
-//     return (n instanceof(BracketNode))
-//     return ("child" in n)
-// }
-// function isAddNode(n: TreeNode): boolean {
-//     return (n instanceof(AddNode))
-//     return ("left" in n) && (n.node_type == "add")
-// }
-// function isMultNode(n: TreeNode): boolean {
-//     return (n instanceof(MultNode))
-//     return ("left" in n) && (n.node_type == "mult")
-// }
-
-// function asNumberNode(n: TreeNode) : NumberNode {
-//     if(!(n.node_type == "number")) {
-//         throw new Error(`asNumberNode node_type is ${n.node_type}`)
-//     }
-//     return (n as unknown) as NumberNode
-// }
-// function asBracketNode(n: TreeNode) : BracketNode {
-//     if(!(n.node_type == "bracket")){
-//         throw new Error(`asBracketNode node_type is ${n.node_type}`)
-//     }
-//     return ((n as unknown) as BracketNode)
-// }
-// function asAddNode(n: TreeNode) : AddNode {
-//     if(!(n.node_type == "add")){
-//         throw new Error(`asAddNode node_type is ${n.node_type}`)
-//     }
-//     return n as AddNode
-// }
-// function asMultNode(n: TreeNode) : MultNode {
-//     if(!(n.node_type == "mult")){
-//         throw new Error(`asMultNode node_type is ${n.node_type}`)
-//     }
-//     return n as MultNode
-// }
-
-// function mk_number_node(n: number): TreeNode {
-//     return NumberNode.make(n) as TreeNode
-// }
-// function mk_bracket_node(exp: TreeNode): TreeNode {
-//     return BracketNode.make(exp) as TreeNode
-// }
-// function mk_add_node(exp1: TreeNode, exp2: TreeNode): TreeNode {
-//     return AddNode.make(exp1, exp2) as TreeNode
-// }
-// function mk_mult_node(exp1: TreeNode, exp2: TreeNode): TreeNode {
-//     return AddNode.make(exp1, exp2) as TreeNode
-// }
 
 export function node_tostring(n: Tree.TreeNode): string {
     if(Tree.isNumberNode(n)) {
@@ -165,19 +57,21 @@ export function evaluate_tree(n: Tree.TreeNode): number {
  * -    combine two values with a "+"
  * -    combine two values with a *
  */
-interface TreeValue {
-    // evalNumber(num: Tree.NumberNode): TreeValue,
-    // bracket(n: TreeValue): TreeValue, 
-    // add(a: TreeValue): TreeValue,
-    // mult(a: TreeValue): TreeValue
-}
-interface TreeValeOperations {
+// interface TreeValue {
+//     // evalNumber(num: Tree.NumberNode): TreeValue,
+//     // bracket(n: TreeValue): TreeValue, 
+//     // add(a: TreeValue): TreeValue,
+//     // mult(a: TreeValue): TreeValue
+// }
+interface TreeValeOperations<TreeValue> {
     make(n: number): TreeValue,
     bracket(a: TreeValue): TreeValue,
     add(a: TreeValue, b: TreeValue): TreeValue,
     mult(a: TreeValue, b: TreeValue): TreeValue
 }
-function treeWalker(n: Tree.TreeNode, value_ops: TreeValeOperations): TreeValue {
+function treeWalker<TreeValue>(
+    n: Tree.TreeNode, 
+    value_ops: TreeValeOperations<TreeValue>): TreeValue {
     function recursive_walker(n: Tree.TreeNode): TreeValue {
         if(Tree.isNumberNode(n)) {
             let nNode = Tree.asNumberNode(n)
@@ -202,4 +96,46 @@ function treeWalker(n: Tree.TreeNode, value_ops: TreeValeOperations): TreeValue 
     }
     return recursive_walker(n)
 }
+type TreePrintValue = string
 
+class TreePrintValueOperations {
+    make(n: number): TreePrintValue {
+        return `${n}`
+    }
+    bracket(value: TreePrintValue): TreePrintValue {
+        return `(${value})`
+    }
+    add(a: TreePrintValue, b: TreePrintValue): TreePrintValue {
+        return `${a} + ${b}`
+    }
+    mult(a: TreePrintValue, b: TreePrintValue): TreePrintValue {
+        return `${a} * ${b}`
+    }
+}
+
+class TreeNumberValueOperations {
+    make(n: number): number {
+        return n
+    }
+    bracket(value: number): number {
+        return value
+    }
+    add(a: number, b: number): number {
+        return a + b
+    }
+    mult(a: number, b: number): number {
+        return a * b
+    }
+
+}
+
+
+export function treeAsString(n: Tree.TreeNode): TreePrintValue {
+    const ops = new TreePrintValueOperations()
+    return treeWalker<TreePrintValue>(n, ops )
+}
+
+export function treeAsNumber(n: Tree.TreeNode): number {
+    const ops = new TreeNumberValueOperations()
+    return treeWalker<number>(n, ops )
+}

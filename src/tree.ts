@@ -95,97 +95,15 @@ export function asMultNode(n: TreeNode) : MultNode {
     return n as MultNode
 }
 
-function mk_number_node(n: number): TreeNode {
-    return NumberNode.make(n) as TreeNode
-}
-function mk_bracket_node(exp: TreeNode): TreeNode {
-    return BracketNode.make(exp) as TreeNode
-}
-function mk_add_node(exp1: TreeNode, exp2: TreeNode): TreeNode {
-    return AddNode.make(exp1, exp2) as TreeNode
-}
-function mk_mult_node(exp1: TreeNode, exp2: TreeNode): TreeNode {
-    return AddNode.make(exp1, exp2) as TreeNode
-}
-
-function node_tostring(n: TreeNode): string {
-    if(isNumberNode(n)) {
-        let nNode = asNumberNode(n)
-        return `${nNode.value}`
-    } else if(isBracketNode(n)) {
-        const bNode: BracketNode = asBracketNode(n)
-        const childstr = node_tostring(bNode.child)
-        return `(${childstr})`
-    } else if(isAddNode(n)) {
-        let aNode = asAddNode(n)
-        let left = node_tostring(aNode.left)
-        let right = node_tostring(aNode.right)
-        return `${left} + ${right}` 
-    } else if(isMultNode(n)) {
-        let mNode = asMultNode(n)
-        let left = node_tostring(mNode.left)
-        let right = node_tostring(mNode.right)
-        return `${left} * ${right}` 
-    } else {
-        throw new Error(`walk if chain failed n.node_type = ${n.node_type}`)
-    }
-    return ""
-}
-function evaluate_tree(n: TreeNode): number {
-    if(isNumberNode(n)) {
-        let nNode = asNumberNode(n)
-        return nNode.value
-    } else if(isBracketNode(n)) {
-        const bNode: BracketNode = asBracketNode(n)
-        const childval = evaluate_tree(bNode.child)
-        return childval
-    } else if(isAddNode(n)) {
-        let aNode = asAddNode(n)
-        let left = evaluate_tree(aNode.left)
-        let right = evaluate_tree(aNode.right)
-        return left + right 
-    } else if(isMultNode(n)) {
-        let mNode = asMultNode(n)
-        let left = evaluate_tree(mNode.left)
-        let right = evaluate_tree(mNode.right)
-        return left * right 
-    } else {
-        throw new Error(`walk if chain failed n.node_type = ${n.node_type}`)
-    }
-    return 0
-}
-interface TreeValue {
-    evalNumber(num: NumberNode): TreeValue,
-    bracket(n: TreeValue): TreeValue, 
-    add(a: TreeValue): TreeValue,
-    mult(a: TreeValue): TreeValue
-}
-interface TreeWalker {
-    make(n: number): TreeValue,
-    add(a: TreeValue, b: TreeValue): TreeValue,
-    mult(a: TreeValue, b: TreeValue): TreeValue
-}
-function treeWalker(n: TreeNode, walker: TreeWalker): TreeValue {
-    function recursive_walker(n: TreeNode): TreeValue {
-        if(isNumberNode(n)) {
-            let nNode = asNumberNode(n)
-            return walker.make(nNode.value)
-        } else if(isBracketNode(n)) {
-            const bNode: BracketNode = asBracketNode(n)
-            return recursive_walker(bNode.child)
-        } else if(isAddNode(n)) {
-            let aNode = asAddNode(n)
-            let left = recursive_walker(aNode.left)
-            let right = recursive_walker(aNode.right)
-            return left.add(right) 
-        } else if(isMultNode(n)) {
-            let mNode = asMultNode(n)
-            let left = recursive_walker(mNode.left)
-            let right = recursive_walker(mNode.right)
-            return left.mult(right) 
-        } else {
-            throw new Error(`walk if chain failed n.node_type = ${n.node_type}`)
-        }
-    }
-    return recursive_walker(n)
-}
+// function mk_number_node(n: number): TreeNode {
+//     return NumberNode.make(n) as TreeNode
+// }
+// function mk_bracket_node(exp: TreeNode): TreeNode {
+//     return BracketNode.make(exp) as TreeNode
+// }
+// function mk_add_node(exp1: TreeNode, exp2: TreeNode): TreeNode {
+//     return AddNode.make(exp1, exp2) as TreeNode
+// }
+// function mk_mult_node(exp1: TreeNode, exp2: TreeNode): TreeNode {
+//     return AddNode.make(exp1, exp2) as TreeNode
+// }
