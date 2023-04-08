@@ -1,5 +1,5 @@
 
-type TreeNodeType = "number" | "bracket" | "add" | "mult"
+type TreeNodeType = "number" | "bracket" | "add" | "mult" | "char" | "plussign" | "multsign"
 export abstract class TreeNode {
     node_type: TreeNodeType
     constructor(t: TreeNodeType) {
@@ -16,6 +16,41 @@ export class NumberNode extends TreeNode {
         return new NumberNode(v)
     }
 }
+export class CharNode extends TreeNode {
+    ch: string
+    constructor(ch: string) {
+        if(ch.length != 1) {
+            throw new Error(`CharNode.constructor ch is too long ${ch}`)
+        }
+        super("char")
+        this.ch = ch
+    }
+    static make(ch: string): CharNode {
+        return new CharNode(ch)
+    }
+}
+
+export class PlusSignNode extends TreeNode {
+    ch: string
+    constructor() {
+        super("plussign")
+        this.ch = "+"
+    }
+    static make(): PlusSignNode {
+        return new PlusSignNode()
+    }
+}
+export class MultSignNode extends TreeNode {
+    ch: string
+    constructor() {
+        super("multsign")
+        this.ch = "*"
+    }
+    static make(): MultSignNode {
+        return new MultSignNode()
+    }
+}
+
 export class BracketNode extends TreeNode {
     child: TreeNode
     constructor(c: TreeNode) {
@@ -27,24 +62,28 @@ export class BracketNode extends TreeNode {
     }
 }
 export class AddNode extends TreeNode {
-    left: TreeNode;
+    left:  TreeNode
     right: TreeNode
+    op:    PlusSignNode
     constructor(left: TreeNode, right: TreeNode) {
         super("add")
         this.left = left
         this.right = right
+        this.op = PlusSignNode.make() 
     }
     static make(left: TreeNode, right: TreeNode): AddNode {
         return new AddNode(left, right)
     }
 }
 export class MultNode extends TreeNode {
-    left: TreeNode;
+    left: TreeNode
     right: TreeNode
+    op: MultSignNode
     constructor(left: TreeNode, right: TreeNode) {
         super("mult")
         this.left = left
         this.right = right
+        this.op = MultSignNode.make()
     }
     static make(left: TreeNode, right: TreeNode): MultNode {
         return new MultNode(left, right)
@@ -59,15 +98,18 @@ export function isNumberNode(n: TreeNode): boolean {
 }
 export function isBracketNode(n: TreeNode): boolean {
     return (n instanceof(BracketNode))
-    return ("child" in n)
 }
 export function isAddNode(n: TreeNode): boolean {
     return (n instanceof(AddNode))
-    return ("left" in n) && (n.node_type == "add")
 }
 export function isMultNode(n: TreeNode): boolean {
     return (n instanceof(MultNode))
-    return ("left" in n) && (n.node_type == "mult")
+}
+export function isPlusSignNode(n: TreeNode): boolean {
+    return (n instanceof(PlusSignNode))
+}
+export function isMultSignNode(n: TreeNode): boolean {
+    return (n instanceof(MultSignNode))
 }
 
 export function asNumberNode(n: TreeNode) : NumberNode {
@@ -94,16 +136,15 @@ export function asMultNode(n: TreeNode) : MultNode {
     }
     return n as MultNode
 }
-
-// function mk_number_node(n: number): TreeNode {
-//     return NumberNode.make(n) as TreeNode
-// }
-// function mk_bracket_node(exp: TreeNode): TreeNode {
-//     return BracketNode.make(exp) as TreeNode
-// }
-// function mk_add_node(exp1: TreeNode, exp2: TreeNode): TreeNode {
-//     return AddNode.make(exp1, exp2) as TreeNode
-// }
-// function mk_mult_node(exp1: TreeNode, exp2: TreeNode): TreeNode {
-//     return AddNode.make(exp1, exp2) as TreeNode
-// }
+export function asPlusSignNode(n: TreeNode) : PlusSignNode {
+    if(!(n.node_type == "plussign")){
+        throw new Error(`asPlusSignNode node_type is ${n.node_type}`)
+    }
+    return n as PlusSignNode
+}
+export function asMultSignNode(n: TreeNode) : MultSignNode {
+    if(!(n.node_type == "multsign")){
+        throw new Error(`asMultSignNode node_type is ${n.node_type}`)
+    }
+    return n as MultSignNode
+}
