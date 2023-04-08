@@ -2,15 +2,6 @@ import * as Tree from "./tree"
 import {treeAsNumber, treeAsString} from "./walker"
 type Ast = Tree.TreeNode | null
 
-type PR<T> = {result: T | null, rem: string}
-function pr_make_result<T>(result: T | null, rem: string): PR<T> {
-    return {result, rem}
-}
-function pr_make_failed(s: string): PR<T> {
-    return pr_make_result(null, s)
-}
-
-
 type ParserResultAst = {ast: Ast, rem: string}
 type ParserResultString = {ast: string | null, rem: string}
 
@@ -28,77 +19,116 @@ function isDone(r: ParserResultAst): boolean {
 function failed(r: ParserResultAst): boolean {
     return (r.ast == null)
 }
-
+/***************************************************************************** */
+// parse an expression
 // exp ::= term + exp | term - must try the one that consumes the most text first
+/***************************************************************************** */
 function expression(sinput: string): ParserResultAst {
-    function term_and_expression(s: string): ParserResultAst {
-        const t = term(s)
-        if(failed(t) || isDone(t)) {
+    const r = parser_or([term_and_expression_2, term_only], sinput)
+    return r
+}
+function term_and_expression_1(sinput: string): ParserResultAst {
+    const s  = removeLeadingWhitespace(sinput)
+    const t = term(s)
+    if(failed(t) || isDone(t)) {
+        return make_failed(sinput)
+    }
+    const plusresult = parseAdditionSign(t.rem)
+    if(failed(plusresult)) {
+        return make_failed(sinput)
+    }
+    const rest: string = plusresult.rem as string
+    let exp = expression(rest)
+    if(failed(exp)) {
+        return make_failed(sinput)
+    }
+    const tnode = t.ast as Tree.TreeNode
+    const expnode = exp.ast as Tree.TreeNode
+    let newast = Tree.AddNode.make(tnode, expnode)
+    return make_result(newast, exp.rem)
+}
+function term_and_expression_2(sinput: string): ParserResultAst {
+    function f(results: Array<ParserResultAst>): ParserResultAst {
+        if(results.length == 0){
             return make_failed(sinput)
         }
-        const plusresult = parseAdditionSign(t.rem)
-        if(failed(plusresult)) {
-            return make_failed(sinput)
+        if(results.length != 3) {
+            throw new Error(`term_and_expression result incorrect length ${results.length}`)
         }
-        const rest: string = plusresult.rem as string
-        let exp = expression(rest)
-        if(failed(exp)) {
-            return make_failed(sinput)
-        }
-        const tnode = t.ast as Tree.TreeNode
-        const expnode = exp.ast as Tree.TreeNode
+        const tnode = results[0].ast as Tree.TreeNode
+        const expnode = results[2].ast as Tree.TreeNode
         let newast = Tree.AddNode.make(tnode, expnode)
-        return make_result(newast, exp.rem)
-    }
-    function term_only(sinput: string): ParserResultAst {
-        const s = removeLeadingWhitespace(sinput)
-        const t = term(s)
-        if(failed(t) || isDone(t)) {
-            return t
-        }
-        const tnode = t.ast as Tree.TreeNode
-        return make_result(tnode, t.rem)
-    }
-    return parser_or([term_and_expression, term_only], sinput)
+        return make_result(newast, results[2].rem)
+    } 
+    return sequence([term, parseAdditionSign, expression], sinput, f)
 }
-
+function term_only(sinput: string): ParserResultAst {
+    const s = removeLeadingWhitespace(sinput)
+    const t = term(s)
+    if(failed(t) || isDone(t)) {
+        return t
+    }
+    const tnode = t.ast as Tree.TreeNode
+    return make_result(tnode, t.rem)
+}
+/***************************************************************************** */
+// parse a term
 // term ::= factor * term | factor
+/***************************************************************************** */
 function term(sinput: string): ParserResultAst {
-    function factor_and_term(sinput: string): ParserResultAst {
-        const s = removeLeadingWhitespace(sinput)
-        let fac = factor(s)
-        if(failed(fac) || isDone(fac)) {
-            return make_result(null, sinput)
-        }
-        const multresult = parseMultiplySign(fac.rem)
-        if(failed(multresult)) {
-            return make_result(null, sinput)
-        }
-        let t = term(multresult.rem)
-        if(failed(t)) {
-            return make_result(null, sinput)
-        }
-        let fnode = fac.ast as Tree.TreeNode
-        let tnode = t.ast as Tree.TreeNode
-        return make_result(Tree.MultNode.make(fnode, tnode), t.rem)
-    }
-    function factor_only(sinput: string): ParserResultAst {
-        const s = removeLeadingWhitespace(sinput)
-        let fac = factor(s)
-        if(failed(fac) || isDone(fac)) {
-            return make_result(null, sinput)
-        }
-        return fac
-    }
-    return parser_or([factor_and_term, factor_only], sinput)
+    const rr = parser_or([factor_and_term_2, factor_only], sinput)
+    return rr
 }
-
+function factor_and_term_1(sinput: string): ParserResultAst {
+    const s = removeLeadingWhitespace(sinput)
+    let fac = factor(s)
+    if(failed(fac) || isDone(fac)) {
+        return make_result(null, sinput)
+    }
+    const multresult = parseMultiplySign(fac.rem)
+    if(failed(multresult)) {
+        return make_result(null, sinput)
+    }
+    let t = term(multresult.rem)
+    if(failed(t)) {
+        return make_result(null, sinput)
+    }
+    let fnode = fac.ast as Tree.TreeNode
+    let tnode = t.ast as Tree.TreeNode
+    return make_result(Tree.MultNode.make(fnode, tnode), t.rem)
+}
+function factor_and_term_2(s: string): ParserResultAst {
+    function f(results: Array<ParserResultAst>): ParserResultAst {
+        if(results.length == 0) {
+            return make_failed(s)
+        }
+        if(results.length != 3) {
+            throw new Error(`term_and_expression result incorrect length ${results.length}`)
+        }
+        const tnode = results[0].ast as Tree.TreeNode
+        const expnode = results[2].ast as Tree.TreeNode
+        let newast = Tree.MultNode.make(tnode, expnode)
+        return make_result(newast, results[2].rem)
+    } 
+    const rr = sequence([factor, parseMultiplySign, term], s, f)
+    return rr
+}
+function factor_only(sinput: string): ParserResultAst {
+    const s = removeLeadingWhitespace(sinput)
+    let fac = factor(s)
+    if(failed(fac)) {
+        return make_result(null, sinput)
+    }
+    return fac
+}
+/***************************************************************************** */
+// parse a factor
+// factor ::= nat | (expression)
+/***************************************************************************** */
 function factor(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     return parser_or([anumber, bracket], s)
 }
-
-// 
 function bracket(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     const openb = parseOpenBracket(s)
@@ -118,7 +148,6 @@ function bracket(sinput: string): ParserResultAst {
     const rnode = Tree.BracketNode.make(newexpnode)
     return make_result(rnode, rem)
 }
-
 function anumber(s: string) : ParserResultAst {
 
     function isDigit(char: string) {
@@ -128,7 +157,7 @@ function anumber(s: string) : ParserResultAst {
         if(str.length == 0) {
             return {numstr:"", rem: ""}
         }
-        const ch = str.substring(0,1)
+        const ch = str.substring(0, 1)
         if(isDigit(ch)) {
             let {numstr, rem} = extractNumber(str.slice(1))
             return {numstr: ch+numstr, rem}
@@ -144,18 +173,10 @@ function anumber(s: string) : ParserResultAst {
         return make_result(numnode, rem)
     }
 }
-/**
- * Move past the expected "*" sign. 
- * Advances the string if successfull
- * returns the input string if failed
- */
-function movePastChar(ch: string, s: string): string {
-    let s2 = removeLeadingWhitespace(s)
-    if(s2.substring(0, 1) == ch) {
-        return removeLeadingWhitespace(s2.substring(1))
-    }
-    return s
-}
+
+/***************************************************************************** */
+// parser primitives 
+/***************************************************************************** */
 function parsePlusSign(s: string): ParserResultAst {
     const f = makeCharParser("+")
     return f(s)
@@ -200,12 +221,14 @@ function removeLeadingWhitespace(s: string): string {
     }
     return s.slice(0)
 }
-/*****************************
- * Ways of combining parser
- ******************************/
+/******************************************************************************/
+// Ways of combining parser
+/*******************************************************************************/
 
-// Alternative - try each parser in order, on the original input, and return the result of the first that succeeds
-function parser_or(ps: Array<(s: string) => ParserResultAst>, input: string): ParserResultAst {
+/** 
+ * Alternative - try each parser in order, on the original input, and return the result of the first that succeeds
+*/
+function parser_or(ps: Array<Parser>, input: string): ParserResultAst {
     if(ps.length == 0) {
         return make_result(null, input)
     }
@@ -216,31 +239,53 @@ function parser_or(ps: Array<(s: string) => ParserResultAst>, input: string): Pa
     return r
 }
 
-// Try each parser in order on the remainder string of the preceeding parser.
-// If any step fails stop and return failed without advancing the original string.
-// If all succeed apply the function (3rd arg) to the array of ParserResultAst
+/** Try each parser in order on the remainder string of the preceeding parser.
+ *  If any step fails stop and return failed without advancing the original string.
+ *   If all succeed apply the function (3rd arg) to the array of ParserResultAst
+*/
 function sequence(ps: Array<Parser>, sinput: string, combine:(rs:Array<ParserResultAst>)=>ParserResultAst): ParserResultAst {
-    function dosequence(ps: Array<Parser>, sinput: string): Array<ParserResultAst> {
-        const s = removeLeadingWhitespace(sinput)
-        const r = ps[0](s)
-        if(failed(r))
-            return []
-        return [r].concat(dosequence(ps.slice(1), r.rem))
+    let s = removeLeadingWhitespace(sinput)
+    let index = 0
+    let results = []
+    while(index < ps.length) {
+        const parser = ps[index]
+        const r = parser(s)
+        if(failed(r)) {
+            return make_failed(sinput)
+        }
+        results.push(r)
+        s = removeLeadingWhitespace(r.rem)
+        index += 1
     }
-    const r = dosequence(ps, sinput)
-    if(r.length == 0) {
-        return make_failed(sinput)
+    if(results.length != ps.length) {
+        throw new Error(`sequence successful result has wrong number of components`)
     }
-    return combine(r)
+    return combine(results)
 }
 
+/** NOTE: missing some() many() */
+
+/******************************************************************************/
+// Tests 
+/*******************************************************************************/
+
 export function test_parser() {
+    test_sequence()
     test_add()
     test_whitespace()
     test_anumber() 
 }
 
+function test_sequence() {
+    const r1 = factor_and_term_1("2 + 3")
+    const r2 = factor_and_term_2("2 + 3")
+    const r3 = factor_and_term_1("2 * 3")
+    const r4 = factor_and_term_2("2 * 3")
 
+    const x1 = term_and_expression_1(" 2 + 3")
+    const x2 = term_and_expression_2(" 2 + 3")
+
+}
 function test_whitespace() {
     let ss = " 1234"
     const ss2 = removeLeadingWhitespace(ss)
@@ -260,10 +305,11 @@ function test_anumber() {
 function test_add() {
     function test_one(expression_str: string)
     {
+        console.log(`testing string ${expression_str}`)
         const r1 = expression(expression_str)
         const s1 = treeAsString(r1.ast as Tree.TreeNode)
         const v1 = treeAsNumber(r1.ast as Tree.TreeNode)
-        console.log(`input ${expression_str} result ${s1} value: ${v1}`)
+        console.log(`input ${expression_str} result ${s1} value: ${v1} \n`)
     }
     test_one("1 + 2")
     test_one("2 * 3")
@@ -274,4 +320,4 @@ function test_add() {
     test_one(" 2*(3+4) + 3+4* 5")
     test_one(" 2*(3+4)+ 3+4* 5")
 }
-// parser_main()
+// test_parser()
