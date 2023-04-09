@@ -1,0 +1,44 @@
+/**
+ * Simple maybe monad
+ */
+
+export type Maybe<T> = T | null
+
+export function just<T>(t:T): Maybe<T> {
+    return t
+}
+export function nothing(){return null}
+
+export function isNothing<T>(r: Maybe<T>){return (r == null)}
+
+
+export function fmap<T,S>(f:(t:T) => S): (x:Maybe<T>) => Maybe<S> {
+    function tmp(x:Maybe<T>): Maybe<S> {
+        if(x == null) {
+            return null
+        } else {
+            const just_x = x as T
+            return just(f(just_x))
+        }
+    }
+    return tmp
+}
+export function mu<T>(m: Maybe<Maybe<T>>): Maybe<T> {
+    if(m == null) {
+        return null
+    } else {
+        return m as T
+    }
+}
+
+export function kliesli<T,S>(f: (a:T) => Maybe<S>) : (mt:Maybe<T>) => Maybe<S> {
+    function tmp(mt: Maybe<T>): Maybe<S> {
+        const fmap_f_mt = fmap(f)(mt)
+        return mu(fmap_f_mt)
+    }
+    return tmp
+}
+
+export function bind<T,S>(x: Maybe<T>, f: (t:T) => Maybe<S>): Maybe<S> {
+    return kliesli(f)(x)
+}

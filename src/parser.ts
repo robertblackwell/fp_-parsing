@@ -1,55 +1,7 @@
-import { prependListener } from "process"
 import * as Tree from "./tree"
 import {treeAsNumber, treeAsString} from "./walker"
 
 type Ast = Tree.TreeNode | null
-
-// class Parser2Tuple<T> {
-//     ast: T
-//     rem: string
-//     constructor(ast: T, rem: string) {
-//         this.ast = ast
-//         this.rem = rem
-//     }
-//     static make<T>(ast: T, rem: string): Parser2Tuple<T> {
-//         return new Parser2Tuple<T>(ast, rem)
-//     }
-//     first(): T {return this.ast}
-//     second(): string {return this.rem}
-//     get_rem(): string {return this.rem}
-// }
-
-
-// class Parser2Result<T> {
-//     list: Array<Parser2Tuple<T>>
-//     constructor() {
-//         this.list = []
-//     }
-//     static make<T>(t: T, rem: string): Parser2Result<T> {
-//         let r = new Parser2Result<T>()
-//         r.list.push(Parser2Tuple.make(t, rem))
-//         return r
-//     }
-//     static make_failed<T>(rem: string): Parser2Result<T> {
-//         return new Parser2Result()
-//     }
-//     failed() {return (this.list.length == 0)}
-//     first() {
-//         if(this.list.length == 0) {
-//             throw new Error(`Parser2Result first length is zero`)
-//         }
-//         return this.list[0].first()
-//     }
-//     second() {
-//         if(this.list.length == 0) {
-//             throw new Error(`Parser2Result second length is zero`)
-//         }
-//         return this.list[0].second()
-//     }
-// }
-// 
-// 
-// type Parser2<T> = <T>(input: string) => Parser2Result<T>
 /**
  * 
  * If you look at a Haskell definition of a parser it is a type constructor such as 
@@ -73,92 +25,35 @@ type Ast = Tree.TreeNode | null
  * I have provided a bunch of utility functions so I can change my mind about the data structures latter
  * 
  */
-type PTuple<T> = [T, string] 
-function pt_make<T>(v: T, rem: string): PTuple<T> {return [v, rem]}
-function pt_first<T>(v: [T, string]): T {return v[0]}
-function pt_second<T>(v: [T, string]): string {return v[1]}
-
-type PResult<T> = Array<PTuple<T>>
-/** 
-* PResult<T> turns out to be a functor. Here is the definition
-* of fmap for that functor 
-*/
-function prfmap<T, S>(f: (t:T) => S): (r: PResult<T>) => PResult<S> {
-    function ftuple(pt: PTuple<T>): PTuple<S> {
-        const first = pt_first(pt)
-        const second =pt_second(pt)
-        const f_first = f(first)
-        return pt_make<S>(f_first, second)
-    }
-    function fmap_f(pr: PResult<T>): PResult<S> {
-        const rr = pr.map((el) => {
-            return ftuple(el)
-        })
-        return rr
-    }
-    return fmap_f
-}
-
-
-
-
-function pr_failed<T>(r: PResult<T>) {return (r.length == 0)}
-function pr_make<T>(v: T, rem: string): PResult<T> {return [pt_make(v, rem)]}
-function pr_make_empty<T>(): PResult<T> {return []}
-function pr_push<T>(pr: PResult<T>, v:T, rem: string): void {pr.push(pt_make(v, rem))}
-function pr_make_failed<T>(): PResult<T> {return []} 
-
-function pr_first<T>(pr: PResult<T>): T {
-    if(pr.length != 1) {
-        throw new Error(`pr_first`)
-    }
-    return pt_first(pr[0])
-}
-function pr_second<T>(pr: PResult<T>): string {
-    if(pr.length != 1) {
-        throw new Error(`pr_first`)
-    }
-    return pt_second(pr[0])
-}
+import * as Maybe from "./maybe"
+import * as PT from "./parser_tuple"
+import * as PR from "./parser_result"
 
 function ast_value(r: ParserResultAst): Ast {
-    return pr_first(r)
+    return PR.first(r)
 } 
 function ast_remain(r: ParserResultAst): string {
-    return pr_second(r)
+    return PR.second(r)
 } 
 
-type P<T> = (s:string) => PResult<T>
-
-
-
-// type NewParserResult<T> = [T, string]
-// type NewParser<T> = <T>(input: string) => [PResult<T>]
-
-// function NewParserResultP
-
-type ParserResultAst = PResult<Ast>
+type P<T> = (s:string) => PR.PResult<T>
+type ParserTupleAst = PT.PTuple<Ast>
+type ParserResultAst = PR.PResult<Ast>
 type ParserResultString = {ast: string | null, rem: string}
 
-function make_result(ast: Ast, rem: string): PResult<Ast> {
-    return pr_make(ast, rem)
-    // return {ast, rem}
+function make_result(ast: Ast, rem: string): PR.PResult<Ast> {
+    return PR.make(ast, rem)
 }
-function make_failed(): PResult<Ast> {
-    return pr_make_failed<Ast>()
-    // return make_result(null, s)
+function make_failed(): PR.PResult<Ast> {
+    return PR.make_failed<Ast>()
 }
-type ParserAst = (s: string) => PResult<Ast>
+type ParserAst = (s: string) => PR.PResult<Ast>
 
 function isDone(r: ParserResultAst): boolean {
     return (ast_remain(r).length == 0)
 }
-function failed(r: PResult<Ast>): boolean {
-    if(r.length > 1) {
-        throw new Error(`failed: ast result should not have more that 1 element`)
-    }
-    return pr_failed(r)
-    // return (r.ast == null)
+function failed(r: PR.PResult<Ast>): boolean {
+    return PR.failed(r)
 }
 /***************************************************************************** */
 // parse an expression
@@ -189,17 +84,14 @@ function term_and_expression_1(sinput: string): ParserResultAst {
     return make_result(newast, ast_remain(exp))
 }
 function term_and_expression_2(sinput: string): ParserResultAst {
-    function f(results: Array<ParserResultAst>): ParserResultAst {
-        if(results.length == 0){
-            return make_failed()
-        }
+    function f(results: Array<ParserTupleAst>): ParserTupleAst {
         if(results.length != 3) {
             throw new Error(`term_and_expression result incorrect length ${results.length}`)
         }
-        const tnode = results[0].ast as Tree.TreeNode
-        const expnode = results[2].ast as Tree.TreeNode
+        const tnode = ast_value(results[0]) as Tree.TreeNode
+        const expnode = ast_value(results[2]) as Tree.TreeNode
         let newast = Tree.AddNode.make(tnode, expnode)
-        return make_result(newast, results[2].rem)
+        return PT.make(newast, ast_remain(results[2]))
     } 
     return sequence([term, parseAdditionSign, expression], sinput, f)
 }
@@ -239,17 +131,14 @@ function factor_and_term_1(sinput: string): ParserResultAst {
     return make_result(Tree.MultNode.make(fnode, tnode), ast_remain(t))
 }
 function factor_and_term_2(s: string): ParserResultAst {
-    function f(results: Array<ParserResultAst>): ParserResultAst {
-        if(results.length == 0) {
-            return make_failed()
-        }
+    function f(results: Array<ParserTupleAst>): ParserTupleAst {
         if(results.length != 3) {
             throw new Error(`term_and_expression result incorrect length ${results.length}`)
         }
-        const tnode = results[0].ast as Tree.TreeNode
-        const expnode = results[2].ast as Tree.TreeNode
+        const tnode = ast_value(results[0]) as Tree.TreeNode
+        const expnode = ast_value(results[2]) as Tree.TreeNode
         let newast = Tree.MultNode.make(tnode, expnode)
-        return make_result(newast, results[2].rem)
+        return PT.make(newast, ast_remain(results[2]))
     } 
     const rr = sequence([factor, parseMultiplySign, term], s, f)
     return rr
@@ -322,7 +211,8 @@ function parsePlusSign(s: string): ParserResultAst {
     const f = makeCharParser("+")
     return f(s)
 }
-function parseAdditionSign(s: string): ParserResultAst {
+function parseAdditionSign(sinput: string): ParserResultAst {
+    const s = removeLeadingWhitespace(sinput)
     const f = makeCharParser("+")
     return f(s)
 }
@@ -330,15 +220,18 @@ function parseMultSign(s: string): ParserResultAst {
     const f = makeCharParser("*")
     return f(s)
 }
-function parseMultiplySign(s: string): ParserResultAst {
+function parseMultiplySign(sinput: string): ParserResultAst {
+    const s = removeLeadingWhitespace(sinput)
     const f = makeCharParser("*")
     return f(s)
 }
-function parseOpenBracket(s: string): ParserResultAst {
+function parseOpenBracket(sinput: string): ParserResultAst {
+    const s = removeLeadingWhitespace(sinput)
     const f = makeCharParser("(")
     return f(s)
 }
-function parseCloseBracket(s: string): ParserResultAst {
+function parseCloseBracket(sinput: string): ParserResultAst {
+    const s = removeLeadingWhitespace(sinput)
     const f = makeCharParser(")")
     return f(s)
 }
@@ -353,7 +246,7 @@ function makeCharParser(ch: string): ParserAst {
             const remstr = removeLeadingWhitespace(s2.slice(1))
             return make_result(ast, remstr)
         }
-        return make_result(null, s)        
+        return make_failed()        
     }
 }
 function removeLeadingWhitespace(s: string): string {
@@ -382,9 +275,10 @@ function parser_or(ps: Array<ParserAst>, input: string): ParserResultAst {
 
 /** Try each parser in order on the remainder string of the preceeding parser.
  *  If any step fails stop and return failed without advancing the original string.
- *   If all succeed apply the function (3rd arg) to the array of ParserResultAst
+ *  If all succeed then we have built an array of ParserTupleAst rather than ParserResultAst 
+ *  If all succeed apply the function (3rd arg) to the array of ParserResultAst
 */
-function sequence(ps: Array<ParserAst>, sinput: string, combine:(rs:Array<ParserResultAst>)=>ParserResultAst): ParserResultAst {
+function sequence(ps: Array<ParserAst>, sinput: string, combine:(rs:Array<ParserTupleAst>)=>ParserTupleAst): ParserResultAst {
     let s = removeLeadingWhitespace(sinput)
     let index = 0
     let results = []
@@ -394,14 +288,14 @@ function sequence(ps: Array<ParserAst>, sinput: string, combine:(rs:Array<Parser
         if(failed(r)) {
             return make_failed()
         }
-        results.push(r)
+        results.push(r as ParserTupleAst)
         s = removeLeadingWhitespace(ast_remain(r))
         index += 1
     }
     if(results.length != ps.length) {
         throw new Error(`sequence successful result has wrong number of components`)
     }
-    return combine(results)
+    return Maybe.just(combine(results))
 }
 
 /** NOTE: missing some() many() */
@@ -461,4 +355,4 @@ function test_add() {
     test_one(" 2*(3+4) + 3+4* 5")
     test_one(" 2*(3+4)+ 3+4* 5")
 }
-// test_parser()
+test_parser()
