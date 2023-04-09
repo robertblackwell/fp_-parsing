@@ -1,64 +1,42 @@
 import * as Tree from "./tree"
 import {treeAsNumber, treeAsString} from "./walker"
-
-type Ast = Tree.TreeNode | null
-/**
- * 
- * If you look at a Haskell definition of a parser it is a type constructor such as 
- *  
- *       P a :: string -> List (a, string)
- * 
- * If a parser fails to parse the string argument it returns the empty list
- * 
- * I am going to emulate that defintion in typescript. See below.
- * Most of the time a parser, when successful, will return a singleton array. However
- * it turns out we need the List (a, string) definition to handle sequential composition
- * of parsers.
- * 
- * Now for the typescript emulation
- * ================================
- * This cold be done with classes but Iam trying to be brief , so 
- * -    PTuple is a ParserTuple -- soon to become PT<T>
- * -    PResult is a ParserResult -- soon to become PR<T>
- * -    P is the parser type
- * 
- * I have provided a bunch of utility functions so I can change my mind about the data structures latter
- * 
- */
-import * as Maybe from "./maybe"
-import * as PT from "./parser_tuple"
+import {
+    Ast, 
+    ParserTupleAst, ParserResultAst, 
+    failed, isDone,
+    make_result, make_failed, 
+    ast_remain, ast_value} from "./ast_functions"
+import * as AST from "./ast_functions"
+import * as PT from "./parser_pair"
 import * as PR from "./parser_result"
-
-function ast_value(r: ParserResultAst): Ast {
-    return PR.first(r)
-} 
-function ast_remain(r: ParserResultAst): string {
-    return PR.second(r)
-} 
-
-type P<T> = (s:string) => PR.PResult<T>
-type ParserTupleAst = PT.PTuple<Ast>
-type ParserResultAst = PR.PResult<Ast>
-type ParserResultString = {ast: string | null, rem: string}
-
-function make_result(ast: Ast, rem: string): PR.PResult<Ast> {
-    return PR.make(ast, rem)
-}
-function make_failed(): PR.PResult<Ast> {
-    return PR.make_failed<Ast>()
-}
-type ParserAst = (s: string) => PR.PResult<Ast>
-
-function isDone(r: ParserResultAst): boolean {
-    return (ast_remain(r).length == 0)
-}
-function failed(r: PR.PResult<Ast>): boolean {
-    return PR.failed(r)
-}
-/***************************************************************************** */
-// parse an expression
-// exp ::= term + exp | term - must try the one that consumes the most text first
-/***************************************************************************** */
+import {ParserType} from "./parser_type"
+import {parser_or, sequence} from "./parser_combiners"
+import {
+    removeLeadingWhitespace,
+    parseMultSign, parseMultiplySign,
+    parseAdditionSign, parsePlusSignToAst,
+    parseOpenBracket, parseCloseBracket
+} from "./primitives"
+type P<T> = ParserType<T>
+/**
+ * This file contains the parsers/functions that parser an aritmetic expression.
+ * And only those functions as all support functions are imported.
+ * 
+ * The bnf definition of the parsing operation is 
+ * 
+ *      exp  ::= term + exp | term
+ *      term ::= factor * term | factor
+ *      factor :: = number | (exp)
+ *
+ * This structure is copied in the following parsers/function.
+ */
+/**
+ * parse an expression
+ * - first try 
+ *      exp ::= term + exp
+ * - if that fails try 
+ *      term
+*/
 function expression(sinput: string): ParserResultAst {
     const r = parser_or([term_and_expression_2, term_only], sinput)
     return r
@@ -104,10 +82,13 @@ function term_only(sinput: string): ParserResultAst {
     const tnode = ast_value(t) as Tree.TreeNode
     return make_result(tnode, ast_remain(t))
 }
-/***************************************************************************** */
-// parse a term
-// term ::= factor * term | factor
-/***************************************************************************** */
+/**
+ * parse a term
+ * - first try 
+ *      term ::= factor * term 
+ * - if that fails try 
+ *      factor
+*/
 function term(sinput: string): ParserResultAst {
     const rr = parser_or([factor_and_term_2, factor_only], sinput)
     return rr
@@ -124,7 +105,7 @@ function factor_and_term_1(sinput: string): ParserResultAst {
     }
     let t = term(ast_remain(multresult))
     if(failed(t)) {
-        return make_result(null, sinput)
+        return make_failed()
     }
     let fnode = ast_value(fac) as Tree.TreeNode
     let tnode = ast_value(t) as Tree.TreeNode
@@ -147,19 +128,23 @@ function factor_only(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     let fac = factor(s)
     if(failed(fac)) {
-        return make_result(null, sinput)
+        return make_failed()
     }
     return fac
 }
-/***************************************************************************** */
-// parse a factor
-// factor ::= nat | (expression)
-/***************************************************************************** */
+
+/**
+ * parse a factor
+ * - first try
+ *      factor :== number
+ * - if that fails try 
+ *      factor = ( exp ) 
+*/
 function factor(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
-    return parser_or([anumber, bracket], s)
+    return parser_or([parse_number, parse_bracket], s)
 }
-function bracket(sinput: string): ParserResultAst {
+function parse_bracket(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     const openb = parseOpenBracket(s)
     if(failed(openb)) {
@@ -167,7 +152,7 @@ function bracket(sinput: string): ParserResultAst {
     }
     const expresult = expression(ast_remain(openb))
     if(failed(expresult)) {
-        return make_result(null, sinput)
+        return make_failed()
     }
     const closeb = parseCloseBracket(ast_remain(expresult))
     if(failed(closeb)) {
@@ -178,7 +163,7 @@ function bracket(sinput: string): ParserResultAst {
     const rnode = Tree.BracketNode.make(newexpnode)
     return make_result(rnode, rem)
 }
-function anumber(s: string) : ParserResultAst {
+function parse_number(s: string) : ParserResultAst {
 
     function isDigit(char: string) {
         return (char.length == 1) && (/^\d$/.test(char))
@@ -204,101 +189,6 @@ function anumber(s: string) : ParserResultAst {
     }
 }
 
-/***************************************************************************** */
-// parser primitives 
-/***************************************************************************** */
-function parsePlusSign(s: string): ParserResultAst {
-    const f = makeCharParser("+")
-    return f(s)
-}
-function parseAdditionSign(sinput: string): ParserResultAst {
-    const s = removeLeadingWhitespace(sinput)
-    const f = makeCharParser("+")
-    return f(s)
-}
-function parseMultSign(s: string): ParserResultAst {
-    const f = makeCharParser("*")
-    return f(s)
-}
-function parseMultiplySign(sinput: string): ParserResultAst {
-    const s = removeLeadingWhitespace(sinput)
-    const f = makeCharParser("*")
-    return f(s)
-}
-function parseOpenBracket(sinput: string): ParserResultAst {
-    const s = removeLeadingWhitespace(sinput)
-    const f = makeCharParser("(")
-    return f(s)
-}
-function parseCloseBracket(sinput: string): ParserResultAst {
-    const s = removeLeadingWhitespace(sinput)
-    const f = makeCharParser(")")
-    return f(s)
-}
-function makeCharParser(ch: string): ParserAst {
-    if(ch.length != 1) {
-        throw new Error(`makeCharParser ch is too long ${ch}`)
-    }
-    return function(s: string): ParserResultAst {
-        let s2 = removeLeadingWhitespace(s)
-        if(s2.substring(0, 1) == ch) {
-            const ast = Tree.CharNode.make(ch) as Tree.TreeNode as Ast
-            const remstr = removeLeadingWhitespace(s2.slice(1))
-            return make_result(ast, remstr)
-        }
-        return make_failed()        
-    }
-}
-function removeLeadingWhitespace(s: string): string {
-    if((s.length > 0) && (s.substring(0, 1) == " ")) {
-        return removeLeadingWhitespace(s.slice(1))
-    }
-    return s.slice(0)
-}
-/******************************************************************************/
-// Ways of combining parser
-/*******************************************************************************/
-
-/** 
- * Alternative - try each parser in order, on the original input, and return the result of the first that succeeds
-*/
-function parser_or(ps: Array<ParserAst>, input: string): ParserResultAst {
-    if(ps.length == 0) {
-        return make_failed()
-    }
-    const r = ps[0](input)
-    if(failed(r)) {
-        return parser_or(ps.slice(1), input)
-    }
-    return r
-}
-
-/** Try each parser in order on the remainder string of the preceeding parser.
- *  If any step fails stop and return failed without advancing the original string.
- *  If all succeed then we have built an array of ParserTupleAst rather than ParserResultAst 
- *  If all succeed apply the function (3rd arg) to the array of ParserResultAst
-*/
-function sequence(ps: Array<ParserAst>, sinput: string, combine:(rs:Array<ParserTupleAst>)=>ParserTupleAst): ParserResultAst {
-    let s = removeLeadingWhitespace(sinput)
-    let index = 0
-    let results = []
-    while(index < ps.length) {
-        const parser = ps[index]
-        const r = parser(s)
-        if(failed(r)) {
-            return make_failed()
-        }
-        results.push(r as ParserTupleAst)
-        s = removeLeadingWhitespace(ast_remain(r))
-        index += 1
-    }
-    if(results.length != ps.length) {
-        throw new Error(`sequence successful result has wrong number of components`)
-    }
-    return Maybe.just(combine(results))
-}
-
-/** NOTE: missing some() many() */
 
 /******************************************************************************/
 // Tests 
@@ -308,7 +198,7 @@ export function test_parser() {
     test_sequence()
     test_add()
     test_whitespace()
-    test_anumber() 
+    test_parse_number() 
 }
 
 function test_sequence() {
@@ -328,14 +218,14 @@ function test_whitespace() {
     const r2 = removeLeadingWhitespace("  ff")
     const r3 = removeLeadingWhitespace("hh")
 }
-function test_anumber() {
-    const r1 = anumber("")
-    const r2 = anumber("aaa")
-    const r3 = anumber("1")
-    const r4 = anumber("123")
-    const r5 = anumber("123 ")
-    const r6 = anumber("123X ")
-    const r7 = anumber("  123X ")
+function test_parse_number() {
+    const r1 = parse_number("")
+    const r2 = parse_number("aaa")
+    const r3 = parse_number("1")
+    const r4 = parse_number("123")
+    const r5 = parse_number("123 ")
+    const r6 = parse_number("123X ")
+    const r7 = parse_number("  123X ")
 }
 function test_add() {
     function test_one(expression_str: string)

@@ -6,6 +6,7 @@ export abstract class TreeNode {
         this.node_type = t
     }
 }
+
 export class NumberNode extends TreeNode {
     value: number
     constructor(v: number) {

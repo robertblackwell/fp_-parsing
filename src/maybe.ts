@@ -11,6 +11,12 @@ export function nothing(){return null}
 
 export function isNothing<T>(r: Maybe<T>){return (r == null)}
 
+export function get_value<T>(r: Maybe<T>): T {
+    if(isNothing(r)) {
+        throw new Error(`Maybe.get_value of nothing`)
+    }
+    return r as T
+}
 
 export function fmap<T,S>(f:(t:T) => S): (x:Maybe<T>) => Maybe<S> {
     function tmp(x:Maybe<T>): Maybe<S> {
