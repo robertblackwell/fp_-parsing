@@ -1,0 +1,4 @@
+ ✔ implement the haskell `do` construct @done (23-04-11 19:35)
+☐ give a version of `sequence` and `parser_or` that use the applicative operations
+☐ prepare outline for document 
+☐ bring all "primitive" parsers - that is ones that parse single or multiple sets of characters - together in primitives.ts 

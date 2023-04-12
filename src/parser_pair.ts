@@ -5,8 +5,8 @@
  *
  * but soon realized it is not immutable and not opaque. 
  * What I want is an immutable pair where there is no direct access to the
- * members and n o provision within the tuple for "nothing" will add that after
- * with a custom `Maybe` Monad
+ * members. Also I wanted the "parser failed" to be implemented as a Maybe Monad
+ * not by some special value within the PPair<> type
  * 
  * So the following class based solution seems better
 */

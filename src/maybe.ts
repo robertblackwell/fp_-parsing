@@ -1,12 +1,19 @@
 /**
  * Simple maybe monad
  */
-
+/**
+ * Wraps a T value or is null - so we have Nullable<T>. 
+ * We could then do the standard TS thiing and check for null before using a Maybe value.
+ * However I wanted the Maybe Monad to be more overtly visible than that approach would have yielded.
+ */
 export type Maybe<T> = T | null
 
 export function just<T>(t:T): Maybe<T> {
     return t
 }
+export function eta<T>(t: T): Maybe<T> {
+    return just(t)
+} 
 export function nothing(){return null}
 
 export function isNothing<T>(r: Maybe<T>){return (r == null)}
