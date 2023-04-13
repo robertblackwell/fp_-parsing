@@ -4,9 +4,8 @@ import * as PT from "../src/parser_type"
 import * as Maybe from "../src/maybe"
 import * as APP from "../src/parser_applicative"
 import * as COMB from "../src/parser_combiners"
-import {assert} from "./test_helpers"
+import {assert, P} from "./test_helpers"
 
-type P<T> = APP.P<T>
 
 function test_manyOr() {
     function parseDigit(sinput: string) {
@@ -84,7 +83,7 @@ function test_manyOr() {
     test_combinators_someOr_02()
     test_combinators_oneormore_02()
 }
-function test_combinators() {
+export function test_combinators() {
     test_manyOr()
 }
-test_combinators()
+// test_combinators()

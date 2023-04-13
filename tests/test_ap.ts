@@ -42,7 +42,7 @@ function test_ap_impls() {
     test_apimpl_01()
 }
 
-function test_ap() {
+function test_ap_default() {
     const test_ap = APP.ap_impl_3
     /**
      * demonstrate the equivalence of, but differences between `ap` and `liftAn` 
@@ -144,5 +144,7 @@ function test_ap() {
     test_ap_3ary_02()
     test_ap_3ary_03()
 }
-test_ap()
-test_ap_impls()
+export function test_ap() {
+    test_ap_default()
+    test_ap_impls()
+}

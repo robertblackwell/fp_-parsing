@@ -3,7 +3,7 @@ import * as PR from "../src/parser_result"
 import * as PT from "../src/parser_type"
 import * as Maybe from "../src/maybe"
 import * as APP from "../src/parser_applicative"
-
+import {P} from "./test_helpers"
 function tests_mu() {
     function p1(s:string): PR.PResult<string> {
         return PP.make(s.substring(0,1), s.substring(1))
@@ -25,7 +25,7 @@ function tests_mu() {
     const x = APP.mu<string>(ppelement)
     console.log("mu test done")
 }
-function test_monad() {
+export function test_monad() {
     tests_mu()
 }
-test_monad()
+// test_monad()

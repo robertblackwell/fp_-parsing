@@ -197,4 +197,6 @@ function test_parse_sum() {
     const r1 = format_result(parseSum("2 + 7"))
     console.log(`test_parse_sum 01 ${r1}`)
 }
-test_parse_sum()
+export function test_string_primitives() {
+    test_parse_sum()
+}

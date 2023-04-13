@@ -80,4 +80,4 @@ function test_add() {
     test_one(" 2*(3+4) + 3+4* 5")
     test_one(" 2*(3+4)+ 3+4* 5")
 }
-test_parser()
+// test_parser()

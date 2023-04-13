@@ -3,8 +3,8 @@ import * as PR from "../src/parser_result"
 import * as PT from "../src/parser_type"
 import * as Maybe from "../src/maybe"
 import * as APP from "../src/parser_applicative"
-import {assert, display_one, display_two, display_three} from "./test_helpers"
-function test_lift()
+import {assert, display_one, display_two, display_three, alphas, numeric} from "./test_helpers"
+export function test_lift()
 {
     // const ttwo = pure(Kurry2(two))
     // const ff = ap<string, (s: string)=>string>(ttwo, alpha)
@@ -45,4 +45,4 @@ function test_lift()
     test_liftA_02()
     test_liftA_03()
 }
-test_lift()
+// test_lift()

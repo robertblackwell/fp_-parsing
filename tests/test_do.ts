@@ -5,7 +5,12 @@ import * as Maybe from "../src/maybe"
 import * as APP from "../src/parser_applicative"
 import {assert, display_one, display_two, display_three} from "./test_helpers"
 
-function test_do() {
+/**
+ * Typescript does not have an equivalent to the Haskell `do {}` construct so we cannot demonstrate it directly.
+ * However even in Haskell the `do{}` construct is only syntactic sugar for `ma >>= (x -> mb >>= (y -> ...... (z-> f(x,y, ...z))))`.
+ * This can be demonstrated in typescript.
+ */
+export function test_do() {
     function div(a: number, b: number): Maybe.Maybe<number> {
         if( b > -0.1 && b < 0.1) 
             return Maybe.nothing()
@@ -16,9 +21,13 @@ function test_do() {
     } 
     /*
     * whenever one sees an unpacking of a Maybe<T> value to apply a fuunction to it
-    * should think of using Maybe.bind. And in Haskell think "do {}"
+    * should think of using Maybe.bind. And in Haskell think "do {}".
+    * 
+    * What problem is being solved by the do notation ?
+    * 
     */
     function do_without_bind() {
+        // a demonstration of `do` without any monadic stuff
         function combine(ma: Maybe.Maybe<number>, mb: Maybe.Maybe<number>): Maybe.Maybe<number> {
             if(Maybe.isNothing(mb)) {
                 return Maybe.nothing()
@@ -40,6 +49,7 @@ function test_do() {
     function test_do_01() {
         const ma = div(12, 2)
         const mb = div(12, 4)
+        // the next line is do { a <- ma; b <- mb; return div(a,b)}
         const mc = Maybe.bind(ma, (a) => Maybe.bind(mb, (b) => div(a,b)))
         assert(!Maybe.isNothing(mc), "test_do_01 assert ! isNothing()")
         assert(Maybe.get_value(mc) == 2, "test_do_01 assert value is 2")
@@ -65,4 +75,4 @@ function test_do() {
     test_do_02()
     test_do_03()
 }
-test_do();
+// test_do();
