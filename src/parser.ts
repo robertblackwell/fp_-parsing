@@ -37,11 +37,11 @@ type P<T> = ParserType<T>
  * - if that fails try 
  *      term
 */
-function expression(sinput: string): ParserResultAst {
+export function expression(sinput: string): ParserResultAst {
     const r = parser_or([term_and_expression_2, term_only], sinput)
     return r
 }
-function term_and_expression_1(sinput: string): ParserResultAst {
+export function term_and_expression_1(sinput: string): ParserResultAst {
     const s  = removeLeadingWhitespace(sinput)
     const t = term(s)
     if(failed(t)) {
@@ -61,7 +61,7 @@ function term_and_expression_1(sinput: string): ParserResultAst {
     let newast = Tree.AddNode.make(tnode, expnode)
     return make_result(newast, ast_remain(exp))
 }
-function term_and_expression_2(sinput: string): ParserResultAst {
+export function term_and_expression_2(sinput: string): ParserResultAst {
     function f(results: Array<ParserTupleAst>): ParserTupleAst {
         if(results.length != 3) {
             throw new Error(`term_and_expression result incorrect length ${results.length}`)
@@ -73,7 +73,7 @@ function term_and_expression_2(sinput: string): ParserResultAst {
     } 
     return sequence([term, parseAdditionSign, expression], sinput, f)
 }
-function term_only(sinput: string): ParserResultAst {
+export function term_only(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     const t = term(s)
     if(failed(t)) {
@@ -89,11 +89,11 @@ function term_only(sinput: string): ParserResultAst {
  * - if that fails try 
  *      factor
 */
-function term(sinput: string): ParserResultAst {
+export function term(sinput: string): ParserResultAst {
     const rr = parser_or([factor_and_term_2, factor_only], sinput)
     return rr
 }
-function factor_and_term_1(sinput: string): ParserResultAst {
+export function factor_and_term_1(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     let fac = factor(s)
     if(failed(fac) || isDone(fac)) {
@@ -111,7 +111,7 @@ function factor_and_term_1(sinput: string): ParserResultAst {
     let tnode = ast_value(t) as Tree.TreeNode
     return make_result(Tree.MultNode.make(fnode, tnode), ast_remain(t))
 }
-function factor_and_term_2(s: string): ParserResultAst {
+export function factor_and_term_2(s: string): ParserResultAst {
     function f(results: Array<ParserTupleAst>): ParserTupleAst {
         if(results.length != 3) {
             throw new Error(`term_and_expression result incorrect length ${results.length}`)
@@ -124,7 +124,7 @@ function factor_and_term_2(s: string): ParserResultAst {
     const rr = sequence([factor, parseMultiplySign, term], s, f)
     return rr
 }
-function factor_only(sinput: string): ParserResultAst {
+export function factor_only(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     let fac = factor(s)
     if(failed(fac)) {
@@ -140,11 +140,11 @@ function factor_only(sinput: string): ParserResultAst {
  * - if that fails try 
  *      factor = ( exp ) 
 */
-function factor(sinput: string): ParserResultAst {
+export function factor(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     return parser_or([parse_number, parse_bracket], s)
 }
-function parse_bracket(sinput: string): ParserResultAst {
+export function parse_bracket(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     const openb = parseOpenBracket(s)
     if(failed(openb)) {
@@ -163,7 +163,7 @@ function parse_bracket(sinput: string): ParserResultAst {
     const rnode = Tree.BracketNode.make(newexpnode)
     return make_result(rnode, rem)
 }
-function parse_number(s: string) : ParserResultAst {
+export function parse_number(s: string) : ParserResultAst {
 
     function isDigit(char: string) {
         return (char.length == 1) && (/^\d$/.test(char))

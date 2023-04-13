@@ -55,3 +55,16 @@ export function kliesli<T,S>(f: (a:T) => Maybe<S>) : (mt:Maybe<T>) => Maybe<S> {
 export function bind<T,S>(x: Maybe<T>, f: (t:T) => Maybe<S>): Maybe<S> {
     return kliesli(f)(x)
 }
+
+
+/**
+ * tests and demonstrations
+ */
+
+function test_maybe() {
+    function demonstrate_use_of_bind() {
+        function without_bind() {
+            
+        }
+    }
+}

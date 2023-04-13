@@ -617,7 +617,28 @@ function test_apply() {
         function sum(a: number, b: number): number {
             return a + b
         } 
-        
+        /*
+        * whenever one sees an unpacking of a Maybe<T> value to apply a fuunction to it
+        * should think of using Maybe.bind. And in Haskell think "do {}"
+        */
+        function do_without_bind() {
+            function combine(ma: Maybe.Maybe<number>, mb: Maybe.Maybe<number>): Maybe.Maybe<number> {
+                if(Maybe.isNothing(mb)) {
+                    return Maybe.nothing()
+                } 
+                if(Maybe.isNothing(mb)) {
+                    return Maybe.nothing()
+                }
+                return div(Maybe.get_value(ma), Maybe.get_value(mb))
+            }
+            const ma = div(12, 2)
+            const mb = div(12, 4)
+            const mc = combine(ma, mb)
+            assert(!Maybe.isNothing(mc), "do _without_bind_demo ! isNothing()")
+            assert(Maybe.get_value(mc) == 2, "do _without_bind_demo assert value is 2")
+            console.log(`do _without_bind_demo result is ${mc}`)
+
+        }
         function test_do_01() {
             const ma = div(12, 2)
             const mb = div(12, 4)

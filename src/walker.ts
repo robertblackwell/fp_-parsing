@@ -63,7 +63,7 @@ export function evaluate_tree(n: Tree.TreeNode): number {
 //     // add(a: TreeValue): TreeValue,
 //     // mult(a: TreeValue): TreeValue
 // }
-interface TreeValeOperations<TreeValue> {
+interface TreeValueOperations<TreeValue> {
     make(n: number): TreeValue,
     bracket(a: TreeValue): TreeValue,
     add(a: TreeValue, b: TreeValue): TreeValue,
@@ -71,7 +71,7 @@ interface TreeValeOperations<TreeValue> {
 }
 function treeWalker<TreeValue>(
     n: Tree.TreeNode, 
-    value_ops: TreeValeOperations<TreeValue>): TreeValue {
+    value_ops: TreeValueOperations<TreeValue>): TreeValue {
     function recursive_walker(n: Tree.TreeNode): TreeValue {
         if(Tree.isNumberNode(n)) {
             let nNode = Tree.asNumberNode(n)

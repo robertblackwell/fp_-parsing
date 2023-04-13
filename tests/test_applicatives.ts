@@ -3,8 +3,7 @@ import * as PR from "../src/parser_result"
 import * as PT from "../src/parser_type"
 import * as Maybe from "../src/maybe"
 import * as APP from "../src/parser_applicative"
-import {assert} from "./test_helpers"
-
+import {assert, display_one, display_two, display_three} from "./test_helpers"
 // short hands for APP.P which is a short hand for PT.ParserType
 type P<T> = APP.P<T>
 /*************************************************************
@@ -66,28 +65,6 @@ function test_apply() {
     const alphas = make_parser_regex(/[A-Za-z]/g)
     const numeric = make_parser_regex(/[0-9]/g)
 
-    /**
-     * Now we needs some operations of the form (s1: string, s2: string, ..., sn: string) => string
-     * 
-     * Will have 3 of them 
-     * -    display_one     arity=1 op
-     * -    display_two     arity=2 op
-     * -    display_three   arity=3 op
-     */
-
-    function display_one(s: string): string {
-        console.log(`display_one s: ${s}`)
-        return `display_one ${s}`
-    }
-    function display_two(s1: string, s2: string): string {
-        console.log(`display_two ${s1} ${s2}`)
-        return `${s1} + ${s2}`
-    }
-    function display_three(s1: string, s2: string, s3: string): string {
-        console.log(`display_three s: ${s1} ${s2} ${s3}`)
-        return `display_three ${s1} + ${s2} + ${s3}`
-
-    }
     function test_stuff() {
         // const x = liftA2<string, string, string>(display_strings)(alpha, alpha)
         const one = APP.pure(display_one)
@@ -276,6 +253,28 @@ function test_apply() {
         function sum(a: number, b: number): number {
             return a + b
         } 
+        /*
+        * whenever one sees an unpacking of a Maybe<T> value to apply a fuunction to it
+        * should think of using Maybe.bind. And in Haskell think "do {}"
+        */
+        function do_without_bind() {
+            function combine(ma: Maybe.Maybe<number>, mb: Maybe.Maybe<number>): Maybe.Maybe<number> {
+                if(Maybe.isNothing(mb)) {
+                    return Maybe.nothing()
+                } 
+                if(Maybe.isNothing(mb)) {
+                    return Maybe.nothing()
+                }
+                return div(Maybe.get_value(ma), Maybe.get_value(mb))
+            }
+            const ma = div(12, 2)
+            const mb = div(12, 4)
+            const mc = combine(ma, mb)
+            assert(!Maybe.isNothing(mc), "do _without_bind_demo ! isNothing()")
+            assert(Maybe.get_value(mc) == 2, "do _without_bind_demo assert value is 2")
+            console.log(`do _without_bind_demo result is ${mc}`)
+
+        }
         
         function test_do_01() {
             const ma = div(12, 2)
@@ -300,6 +299,7 @@ function test_apply() {
             assert(Maybe.isNothing(mc), "test_do_03 assert  isNothing() as expected")
             console.log(`test_do_03 result is ${mc}`)
         }
+        do_without_bind()
         test_do_01()
         test_do_02()
         test_do_03()
