@@ -11,5 +11,35 @@
 <p>some text</p>
 <h2 id="functional-parsing-functors-applicatives-and-monads">Functional Parsing, Functors, Applicatives and Monads</h2>
 <p>This is an exercise in udnerstanding this stuff</p>
+<h1 id="parsing-functional-programming-and-categorical-stuff-in-typescript">Parsing, Functional Programming and Categorical Stuff In Typescript</h1>
+<h2 id="introduction">Introduction</h2>
+<h3 id="goal">Goal</h3>
+<p>This project is a personal learning exercise in which my goal is to develop a parser for arithmetic expressions using the FP/Category Theory machinery of Functors, Applicatives, and Monads.</p>
+<h3 id="motivation">Motivation</h3>
+<p>I have been dabbling with functional programming in Haskell and Ocaml for sometime but have found it difficult to get my head around.</p>
+<p>This is particular gauling because as well as a programmer I am (or was) a Category Theorist, and in my Doctoral Dissertation I proved some Theorems about Monads (as least Monads in a 2-category that in those days were called Doctrines). So I am very familiar with the Category Theory, but have still found Haskell and its concepts difficult to absorb (a little later I will touch on why I believe I have found this stuff difficult).</p>
+<p>So this project is a concerted effort to learn.</p>
+<p>I have chosen to implement this project in Typescript. It is a language I know reasonably well, has an adequate type system (for most things but as we will see not for this project) and it is a traditional enough imperative language that any programmer should be able to follow along as I implement the various concepts.</p>
+<p>A little later I will touch on the things I wish Typescript had which would made this a more complete exercise.</p>
+<h3 id="notation-comparison">Notation Comparison</h3>
+<p>I believe the notation used in Haskell, Ocaml and other ML related languages get in the way of the Category Theorist in me grasping what is going on. A few examples:</p>
+<ol type="1">
+<li><p>In CT (Category Theory) the notation FP/Haskell operates in the <strong>Hask</strong> category where objects are <strong>types</strong> (as defined by the languages type rules) and arrows are functions between types.</p></li>
+<li><p>In CT (objects upper case) and <code>A -&gt; B</code> represents a particular arrow/function between two objects where as Haskell has no diagramatic notation for a single arrow and the notation <code>a -&gt; b</code> is a type. The equivalent in CT is <code>B superscript A</code> or sometimes <code>[A, B]</code> and is an the <strong>object in the category</strong>. This is what makes <strong>Hask</strong> a <strong>closed category</strong>. So if <code>M</code> (or <code>m</code> in Haskell) is a functor in CT <code>M(A-&gt;B)</code> is the functor applied to an arrow <code>A-&gt;B</code> whereas the equivalent Haskell notation <code>m( a-&gt; b)</code> is the functor applied to the object <code>a-&gt;b</code>. What a CTist would call <code>[A,B]</code>.<br />
+This is difference in the meaning of <code>m(a-&gt;b)</code> has definitely caused me grief and substantially slowed my understanding.</p></li>
+<li><p>CT represents the set of all arrows from <code>A</code> to <code>B</code> by <code>Hom(A, B)</code>. There is no equivalent in Haskell other than to say that <code>ab is a value of type (a -&gt; b)</code>.</p></li>
+<li><p>Finally consider pairs. If <code>A/a</code> and <code>B/b</code> are objects in (CT/Haskell) respectively the type of all pairs is called respectively <code>A x B</code> and <code>(a, b)</code>.</p></li>
+</ol>
+<h3 id="notation-for-this-document">Notation for this document</h3>
+<ul>
+<li>Objects are uppercase. This is consistent with Typescript general usage.</li>
+<li><code>A -&gt; B</code> means a specific arrow from <code>A to</code>B`.</li>
+<li><code>A =&gt; B</code> is the type of arrows from <code>A</code> to <code>B</code>. Typescript will often insist that I write is <code>(a:A)=&gt;B</code>.</li>
+<li>Functors, Applicatives, Monads are always represented by uppercase letters or a name starting with an uppercase letter, such as <code>Maybe</code>.</li>
+<li>Functor application will uses angle brackets. <code>F&lt;A&gt;</code> is the functor <code>F</code> applied to the object <code>A</code>. Typescript requirement. We might occasionally slip and write <code>F&lt;A-&gt;B&gt;</code> when we mean <code>fmap&lt;A-&gt;B&gt;</code>.</li>
+<li>We will generally write <code>A x B</code> as the type of pairs of <code>[A, B]</code> except when Typescript insists on using the second notation.</li>
+<li>A function that takes <code>n</code> arguments is not the same as a function that takes a single <code>n-tuple</code>. Nor is it the same as the function resulting from full or partial <code>currying</code>. These are <strong>equivalent</strong> (meaning there is an isomorphism that maps one to the other and back again) but not the same. Typescript also insists on this differentiation.</li>
+</ul>
+<h3 id="useful-tricks">Useful Tricks</h3>
   </body>
 </html>
