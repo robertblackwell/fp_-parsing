@@ -163,6 +163,8 @@ function failed(r: PResult<Ast>): boolean {
 /***************************************************************************** */
 // parse an expression
 // exp ::= term + exp | term - must try the one that consumes the most text first
+//
+// Two implementations are provided _2 using the `sequence` combinator
 /***************************************************************************** */
 function expression(sinput: string): ParserResultAst {
     const r = parser_or([term_and_expression_2, term_only], sinput)
@@ -215,6 +217,9 @@ function term_only(sinput: string): ParserResultAst {
 /***************************************************************************** */
 // parse a term
 // term ::= factor * term | factor
+//
+// 2 implementations are provided - _2 using the `sequence` combinator
+//
 /***************************************************************************** */
 function term(sinput: string): ParserResultAst {
     const rr = parser_or([factor_and_term_2, factor_only], sinput)
