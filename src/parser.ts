@@ -17,6 +17,7 @@ import {
     parseAdditionSign, parsePlusSignToAst,
     parseOpenBracket, parseCloseBracket
 } from "./primitives"
+
 type P<T> = ParserType<T>
 /**
  * This file contains the parsers/functions that parser an aritmetic expression.

@@ -3,7 +3,7 @@
 ## Arithmetic Expressions
 
 The mission of this project is to build programs that 
--   parses arithmetic expressions into a data structure I will call and `Ast`, 
+-   parses arithmetic expressions into a data structure I will call an `Ast`, 
 -   evaluates such a data structure,
 -   and prints such a data structure.
 
@@ -60,7 +60,7 @@ interface PPairClass<T> {
 ## Abstract Syntax Tree
 
 Most of the parser we deal with will (on success) produce part of a structure called an `Abstract Syntax Tree`. This will be a binary
-tree that represents the portion of the tree that they have just parsed.
+tree that represents the portion of the expression that has just been parsed.
 
 Ideally we would define the tree in a manner that parallels the BNF definition of an expression. In Haskell Something like:
 
@@ -80,7 +80,7 @@ following Typescript immitation:
     abstract class TreeNode {....}
     class PlusNode extends TreeNode  {left: TreeNode; right: TreeNode}
     class MultNode extends TreeNode  {left: TreeNode; right: TreeNode}
-    class BracketNode  extends TreeNode  {left: TreeNode}
+    class BracketNode  extends TreeNode  {inside: TreeNode}
     class NumberNode extends TreeNode {value: number}
 ```
 
@@ -93,7 +93,7 @@ Each concrete class has a static method `make` that creates an instance of the c
     NumberNode.make(n: number)
 ```
 
-Whe manipulating TreeNodes one often needs to know the concrete type a `TreeNode`. To facilitate this
+When manipulating TreeNodes one often needs to know the concrete type a `TreeNode`. To facilitate this
 there are a set of free functions with names like `isMultNode(node: TreeNode): boolean`
 which can be used in an if-ifelse-else chain. Once having determined the concrete type
 of a `TreeNode` such a node needs to be "cast" to the appropriate concrete type. There are 
@@ -101,6 +101,8 @@ a suite of functions to do this, with error checking. Names like `asMultNode(nod
 
 The above arrangement provides an equivalent to the Haskell `data` statement provided earlier. However
 because of the `type casting` type safety depends on hand coded runtime checking.  
+
+Unfortunately this is as close as I can get in Typescript to Haskells pattern matching. 
 
 ## Convenience Node Types
 
@@ -149,10 +151,9 @@ function createPredicateParser(predicate (ch: string) => boolean): Parser<string
 }
 ```
 ```ts
-/**
+/*
  * Take a parser for a single character meeting some criteria and return
- * a parser that detects 
- * one or consecutive instances of such characters 
+ * a parser that detects greater than zero consecutive instances of such characters 
 */
 function createOneOrMoreParser(singleChParser: Parser<string>): Parser<string> {
     function manyTimes(sinput: string) => {
