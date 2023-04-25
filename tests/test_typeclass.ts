@@ -19,12 +19,22 @@
  * ```ts
  */ 
   
-abstract class Monad<T>{ 
+abstract class Functor<T> {
     abstract static make<T>(t: T): Monad<T>
+    abstract static fmap<T,S>(f:(t:T) => S): (mt: Monad<T>) => Monad<S>;
+
+}
+abstract class Monad<T> extends Functor<T>{ 
     abstract static pure<T>(t: T): Monad<T>;
     abstract static mu<T>(tt: Monad<Monad<T>>): Monad<T>;
-    static bind<T, S>(mt: Monad<T>, f: (s: S) => Monad<T>): (mt: Monad<T>);
-    
+    static kliesli<T,S>(f:(t: T) => Monad<S>): (mt: Monad<T>) => Monad<S> {
+        return (mt: Monad<T>) => {
+            return Monad.mu(this.fmap(f)(mt))
+        }
+    }
+    static bind<T, S>(mt: Monad<T>, f: (s: S) => Monad<T>): Monad<T> {
+        return Monad.kliesli(f)(mt)
+    }
 }
 
 class Maybe<T> extends Monad<T> {
@@ -37,6 +47,15 @@ class Maybe<T> extends Monad<T> {
         let obj = new Maybe<T>()
         obj.value = t;
         return obj
+    }
+    static fmap<A, B>(f:(a:A) => B): (ma: Maybe<A>) => Maybe<B> {
+        return (ma) => {
+            if(Maybe.isNothing(ma)) {
+                return Maybe.nothing()
+            } else {
+                return Maybe.make(f(Maybe.get_value(ma)))
+            }
+        }
     }
     static nothing<T>(): Maybe<T> {
         return new Maybe<T>()
@@ -59,8 +78,5 @@ class Maybe<T> extends Monad<T> {
             return Maybe.nothing()
         }
         return Maybe.get_value(tt)
-    }
-    static bind<T, S>(mt: Monad<T>, f: (s: S) => Monad<T>): (mt: Monad<T>) {
-
     }
 }
