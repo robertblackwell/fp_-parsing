@@ -57,7 +57,14 @@ function apply<A, B>(a: P<A>, f: P<(a:A) => B>): P<B> {
     } 
     return result
 }
-
+//
+// IMportant reference on the equivalence of liftA2 and app
+// https://en.wikipedia.org/wiki/Monoidal_functor
+//
+// The following link shows that is a closed monoidal category 
+// the notionals of a lax-monoidal functor and a lax closed functor are
+// equivalent. Which is exactly what the two definitionas of applicative correspond to
+//https://ncatlab.org/nlab/show/closed+functor
 //
 // There are other ways to definean applicative - here is one which uses a definition of
 // parser which is analogous to the one used here
@@ -173,8 +180,8 @@ export function ap_impl_2<A, B>(pf: P<(a:A) => B>, pa: P<A>): P<B> {
 export function ap_impl_3<A, B>(pf: P<(a:A) => B>, pa: P<A>): P<B> {
     /**
      * liftA2 implemented using only <*> the alternative applicable definition
-     * 
-     * NOTE: something wrong must test
+     * (<*>) = lift id
+     * @TODO NOTE: something wrong must test
      */
     const uncurried_id = (f: (x:A) => B, a:A) => f(a)
     const lifted_id = liftA2(uncurried_id)

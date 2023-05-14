@@ -1,0 +1,1 @@
+import * as XX from "./mod?x=y"
