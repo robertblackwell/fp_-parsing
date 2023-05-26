@@ -93,7 +93,7 @@ Each concrete class has a static method `make` that creates an instance of the c
     NumberNode.make(n: number)
 ```
 
-When manipulating TreeNodes one often needs to know the concrete type a `TreeNode`. To facilitate this
+When manipulating TreeNodes one often needs to know the concrete type of a `TreeNode`. To facilitate this
 there are a set of free functions with names like `isMultNode(node: TreeNode): boolean`
 which can be used in an if-ifelse-else chain. Once having determined the concrete type
 of a `TreeNode` such a node needs to be "cast" to the appropriate concrete type. There are 
@@ -117,7 +117,7 @@ Consider the following simple parser:
  * Match any single character
  */
 function parseAnyChar<string>(sinput: string): Maybe<PPairClass<string>> {
-    const s = removewhitespave(sinput)
+    const s = removewhitespace(sinput)
     if(sinput.length ==0)
         return Maybe.nothing()
     const value = s.substring(0,1)
@@ -125,7 +125,7 @@ function parseAnyChar<string>(sinput: string): Maybe<PPairClass<string>> {
     return Maybe.just(PPairClass.make(value, remaiinder))
 }
 /**
- * Parse a digit if without consuming leading white space
+ * Parse a digit without consuming leading white space
  */ 
 function parseSingleDigit(sinput string): Maybe<PPairClass<string>> {
     const s = sinput.slice(0)

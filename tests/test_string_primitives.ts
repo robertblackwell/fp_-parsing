@@ -7,3 +7,4 @@ export function test_string_primitives() {
     // this next one does not work
     // TSP.test_createoneormore()
 }
+

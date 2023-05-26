@@ -4,6 +4,7 @@ import * as PT from "../src/parser_type"
 import * as Maybe from "../src/maybe"
 import * as APP from "../src/parser_applicative"
 import * as COMB from "../src/parser_combiners"
+import * as PRIM from "../src/string_primitives"
 import {assert, P} from "./test_helpers"
 
 
@@ -86,4 +87,13 @@ function test_manyOr() {
 export function test_combinators() {
     test_manyOr()
 }
+
+function test_oneormore_parser() {
+    const test_input = "1234hhhh"
+
+    const p2 = COMB.createOneOrMoreParser_new(PRIM.parseSingleDigit)
+    const r2 = p2(test_input)
+    console.log(r2)
+}
+test_oneormore_parser()
 // test_combinators()

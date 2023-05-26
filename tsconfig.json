@@ -65,6 +65,7 @@
         "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
     },
     "include": [
+        "src/main.ts", "tests/test_runall.ts", "initial-solution/main.ts"
     ],
     "exclude": [
         "./node_modules"

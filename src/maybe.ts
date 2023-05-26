@@ -44,7 +44,7 @@ class Maybe2<T> {
         if(Maybe2.isNothing(mmt) || Maybe2.isNothing(Maybe2.getValue(mmt))) {
             return Maybe2.nothing()
         }
-        return Maybe2.getValue(Maybe2.getValue(mmt)) as Maybe2<T>
+        return Maybe2.getValue(Maybe2.getValue(mmt)) as unknown as Maybe2<T>
     }
 }
 

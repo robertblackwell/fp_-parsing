@@ -6,7 +6,9 @@ import {Ast, ParserAst, ParserResultAst} from "./ast_functions"
 import * as Maybe from "./maybe"
 import * as PT from "./parser_pair"
 import * as PR from "./parser_result"
+import * as PM from "./parser_monad"
 import {ParserType} from "./parser_type"
+import {parseNumber} from "../src/string_primitives"
 
 type StringParser = ParserType<string>
 type StringParserResult = PR.PResult<string>
@@ -87,4 +89,9 @@ export function removeLeadingWhitespace(s: string): string {
         return removeLeadingWhitespace(s.slice(1))
     }
     return s.slice(0)
+}
+export function parseNumberToAst(sinput: string): ParserResultAst {
+    const f = (n: number) => (PM.eta(Tree.NumberNode.make(n) as Ast))
+    const r = PM.bind(parseNumber, f)
+    return r(sinput)
 }

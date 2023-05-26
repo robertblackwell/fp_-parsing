@@ -208,3 +208,4 @@ export function sequence3<T, S>(p1: P<T>, p2: P<S>, p3: P<T>, combine: (t1: T, t
     return APP.ap(APP.ap(APP.ap(APP.pure(f), p1), p2), p3)
 
 }
+

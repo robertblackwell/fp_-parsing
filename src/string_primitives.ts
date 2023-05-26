@@ -85,7 +85,7 @@ function parseAnyChar(sinput: string): Maybe.Maybe<PP.PPair<string>> {
 /**
  * Parse a digit if without consuming leading white space
  */ 
-function parseSingleDigit(sinput: string): Maybe.Maybe<PP.PPair<string>> {
+export function parseSingleDigit(sinput: string): Maybe.Maybe<PP.PPair<string>> {
     const s = sinput.slice(0)
     if((s.length == 0) || (s.substring(0, 1).match(/[0-9]/g)) == null) {
         return Maybe.nothing()
@@ -107,43 +107,12 @@ function createPredicateParser(predicate: (ch: string) => boolean): PT.ParserTyp
         return Maybe.just(PP.make(value, remainder))
     }
 }
-const createOneOrMoreParser = createOneOrMoreParser_old
-/**
- * Take a parser for a single character meeting some criteria and return
- * a parser that detects 
- * one or consecutive instances of such characters 
-*/
-function createOneOrMoreParser_old(singleChParser: PT.ParserType<string>) {
-    function manyTimes(sinput: string): Maybe.Maybe<PP.PPair<string>> {
-        let s = sinput.slice(0)
-        const r = singleChParser(s)
-        let parse_result = ""
-        if(Maybe.isNothing(r)) {
-            return Maybe.nothing()
-        }
-        const pair = Maybe.get_value(r)
-        parse_result = pair.value
-        const remain = pair.remaining_input
-        const r2 = manyTimes(remain)
-        if(Maybe.isNothing(r2)) {
-            return Maybe.just(PP.make(parse_result, remain)) 
-        }
-        const pair2 = Maybe.get_value(r2)
-        parse_result = parse_result + pair2.value
-        return Maybe.just(PP.make(parse_result, pair2.remaining_input)) 
+function createPredicateParserStripLeadingWhiteSpace(predicate: (ch: string) => boolean): PT.ParserType<string> {
+    return function (sinput: string) {
+        const newinput = removewhitespace(sinput)
+        return createPredicateParser(predicate)(newinput)
     }
-    return manyTimes
 }
-function createOneOrMoreParser_new(singleChParser: PT.ParserType<string>) {
-    throw new Error(`createOneOrMoreParser_new does not work - dont callit`)
-    function manyTimes(sinput: string): Maybe.Maybe<PP.PPair<string>> {
-        let s = sinput.slice(0)
-        const combine = (s1: string) => (s2: string) => s1+s2
-        return APP.ap(APP.ap(APP.pure(combine), singleChParser), manyTimes)(s)
-   }
-    return manyTimes
-}
-
 const removewhitespace = (sinput: string): string => {
     const s = sinput.slice(0)
     const r = createOneOrMoreParser(createPredicateParser((ss) => ss.substring(0,1) == " ") )(s)
@@ -153,7 +122,7 @@ const removewhitespace = (sinput: string): string => {
     return removewhitespace(Maybe.get_value(r).remaining_input)
 }
 
-const parseNumber = parseNumber_old
+export const parseNumber = parseNumber_old
 function parseNumber_old(sinput: string): Maybe.Maybe<PP.PPair<number>> {
     const digitParser = createPredicateParser((ss: string) => ((ss.substring(0, 1).match(/[0-9]/g) != null)))
     const numParser = createOneOrMoreParser(digitParser)
@@ -183,6 +152,13 @@ function parseNumber_new(sinput: string): Maybe.Maybe<PP.PPair<number>> {
     let s = removewhitespace(sinput)
     return APP.ap(APP.pure(numStrToNumber), parseNumberString)(sinput)
 }
+
+
+export const parsePlusSignToString = createPredicateParserStripLeadingWhiteSpace((ch: string) => (ch === "+"))
+export const parseMultSignToString = createPredicateParserStripLeadingWhiteSpace((ch: string) => (ch === "*"))
+export const parseOpenBracketToString = createPredicateParserStripLeadingWhiteSpace((ch: string) => (ch === "("))
+export const parseCloseBracketToString = createPredicateParserStripLeadingWhiteSpace((ch: string) => (ch === ")"))
+
 function parsePlusSign(sinput: string): Maybe.Maybe<PP.PPair<string>> {
     const plus = createPredicateParser((ss: string) => ss.substring(0,1) == "+")
     const s = removewhitespace(sinput)
@@ -215,6 +191,48 @@ function parseSum(sinput: string): Maybe.Maybe<PP.PPair<number>> {
     const x = pp(sinput)
     return x
 }
+
+/**
+ * Take a parser for a single character meeting some criteria and return
+ * a parser that detects one or consecutive instances of such characters 
+ * 
+ * This implmentation is parser specific. A more general solution is possible
+ * but it requires an examination of a Functor of type Alternative
+ * and there is already enough category theory in this project
+*/
+function createOneOrMoreParser(singleChParser: PT.ParserType<string>) {
+    function manyTimes(sinput: string): Maybe.Maybe<PP.PPair<string>> {
+        let s = sinput.slice(0)
+        const r = singleChParser(s)
+        let parse_result = ""
+        if(Maybe.isNothing(r)) {
+            return Maybe.nothing()
+        }
+        const pair = Maybe.get_value(r)
+        parse_result = pair.value
+        const remain = pair.remaining_input
+        const r2 = manyTimes(remain)
+        if(Maybe.isNothing(r2)) {
+            return Maybe.just(PP.make(parse_result, remain)) 
+        }
+        const pair2 = Maybe.get_value(r2)
+        parse_result = parse_result + pair2.value
+        return Maybe.just(PP.make(parse_result, pair2.remaining_input)) 
+    }
+    return manyTimes
+}
+// function createOneOrMoreParser_new(singleChParser: PT.ParserType<string>) {
+//     // throw new Error(`createOneOrMoreParser_new does not work - dont callit`)
+//     function manyTimes(sinput: string): Maybe.Maybe<PP.PPair<string>> {
+//         let s = sinput.slice(0)
+//         const combine = (s1: string) => (s2: string) => s1+s2
+//         const x = APP.ap(APP.ap(APP.pure(combine), singleChParser), manyTimes)(s)
+//         return x
+//    }
+//     return manyTimes
+// }
+
+
 /**
  * Of course the implementation of parseSum2 could be made more brief as follows:
  * ```ts
@@ -241,7 +259,20 @@ export function test_parse_sum() {
 }
 export function test_createoneormore() {
     const digitParser = createPredicateParser((ss: string) => ((ss.substring(0, 1).match(/[0-9]/g) != null)))
-    const r = createOneOrMoreParser_new(digitParser)("123r")
+    const r = createOneOrMoreParser(digitParser)("123r")
     console.log(r)
 }
+
+
+export function test_oneormore_parser() {
+    const test_input = "1234hhhh"
+
+    const p = createOneOrMoreParser(parseSingleDigit) 
+    const r = p(test_input)
+    const p2 = createOneOrMoreParser(parseSingleDigit)
+    const r2 = p2(test_input)
+    console.log(r)
+}
+
+// test_oneormore_parser()
 // test_parse_sum()
