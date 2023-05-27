@@ -141,6 +141,26 @@ export function liftA2<A, B, C>(f: (a: A, b: B) => C): (x: Maybe<A>, y: Maybe<B>
     return lifted_f
 }
 /**
+ * Returns the first result that is not nothing
+ * 
+ * This operation makes Maybe into a `Alternative`
+ * 
+ * choice() can be extended to an n-ary function 
+ * 
+ * eg choice3(ma1, ma2, ma3) = choice(choice(ma1, ma2), ma3)
+ */
+export function choice<A>(ma1: Maybe<A>, ma2: Maybe<A>): Maybe<A> {
+    if(isNothing(ma1)) {
+        if(isNothing(ma2)) {
+            return nothing()
+        }
+        return ma2
+    }
+    return ma1
+}
+
+
+/**
  * And this is the proof the the existence of `liftA2` implies the existence of `<*>`
  */
 

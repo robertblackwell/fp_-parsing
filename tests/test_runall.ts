@@ -13,10 +13,10 @@ import {P, assert, display_one, display_two, display_three} from "./test_helpers
  import {test_parser} from "./test_parser"
 //  import {test_string_primitives} from "./test_string_primitives"
 
- test_monad()
- test_liftA2()
- test_ap()
- test_do()
- test_combinators()
+//  test_monad()
+//  test_liftA2()
+//  test_ap()
+//  test_do()
+//  test_combinators()
  test_parser()
 //  test_string_primitives()

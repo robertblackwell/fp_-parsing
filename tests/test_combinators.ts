@@ -1,6 +1,7 @@
 import * as PP from "../src/parser_pair"
 import * as PR from "../src/parser_result"
 import * as PT from "../src/parser_type"
+import * as PM from "../src/parser_monad"
 import * as Maybe from "../src/maybe"
 import * as APP from "../src/parser_applicative"
 import * as COMB from "../src/parser_combiners"
@@ -84,10 +85,35 @@ function test_manyOr() {
     test_combinators_someOr_02()
     test_combinators_oneormore_02()
 }
+
+function test_many() {
+    function test_many_1() {
+        const p = COMB.many(PRIM.parseSingleDigit)
+        const rr = p("123tyu")
+        assert(Maybe.isNothing(rr) == false, "should not fail")
+        const v1 = Maybe.get_value(rr)
+        assert(v1.remaining_input == "tyu", "only consumed the digits")
+        assert(v1.value.length == 3, "array length 3")
+        assert(v1.value.join(",") == "1,2,3", "")
+        console.log(rr)
+        const rr2 = p("wjwjwj")
+        assert(Maybe.isNothing(rr2), "should fail")
+        console.log(rr2)
+        const rr3 = PM.bind(p, (ar) => PM.eta(ar.join(":")))("19374aJJJJ")
+        const v3 = Maybe.get_value(rr3)
+        assert(v3.remaining_input == "aJJJJ", "only consumed the digits")
+        assert(v3.value == "1:9:3:7:4", "the value should be 1:9:3:7:4")
+
+        console.log(rr3)
+    }
+    test_many_1()
+}
 export function test_combinators() {
     test_manyOr()
 }
-
+function test_choice() {
+    
+}
 function test_oneormore_parser() {
     const test_input = "1234hhhh"
 
@@ -95,5 +121,6 @@ function test_oneormore_parser() {
     const r2 = p2(test_input)
     console.log(r2)
 }
-test_oneormore_parser()
+// test_oneormore_parser()
+test_many()
 // test_combinators()

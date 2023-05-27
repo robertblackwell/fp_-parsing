@@ -72,6 +72,9 @@ function apply<A, B>(a: P<A>, f: P<(a:A) => B>): P<B> {
 //
 // needs a lot of elaborating before it is understandable
 //
+// Another reference for alternative
+//https://en.wikibooks.org/wiki/Haskell/Alternative_and_MonadPlus
+//
 //https://math.stackexchange.com/questions/4306514/what-makes-every-strong-monad-on-a-certain-category-be-a-monoidal-functor
 // https://www.cse.unsw.edu.au/~cs3141/22T2/Week%2007/Lecture/Slides.pdf
 // unsw monad is an applicative

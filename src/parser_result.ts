@@ -27,7 +27,7 @@ export function fmap<T, S>(f: (t:T) => S): (r: PResult<T>) => PResult<S> {
 
 
 export function failed<T>(r: PResult<T>) {return Maybe.isNothing(r)}
-export function make<T>(v: T, rem: string): PResult<T> {return PP.make(v, rem)}
+export function make<T>(v: T, rem: string): PResult<T> {return Maybe.just(PP.make(v, rem))}
 export function make_empty<T>(): PResult<T> {return Maybe.nothing()}
 export function make_failed<T>(): PResult<T> {return Maybe.nothing()} 
 

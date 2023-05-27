@@ -10,6 +10,7 @@ import * as PP from "./parser_pair"
 import * as PR from "./parser_result"
 import * as PT from "./parser_type"
 import * as APP from "./parser_applicative"
+import * as PM from "./parser_monad"
 import {ParserType} from "./parser_type"
 import {removeLeadingWhitespace} from "./primitives"
 type P<T> = ParserType<T>
@@ -208,4 +209,66 @@ export function sequence3<T, S>(p1: P<T>, p2: P<S>, p3: P<T>, combine: (t1: T, t
     return APP.ap(APP.ap(APP.ap(APP.pure(f), p1), p2), p3)
 
 }
+/**
+ * These sequence functions can also be implemented using the Monad structure as in
+ */
+export function sequenceMonadic2<T>(p1: P<T>, p2: P<T>, combine:(t1: T, t2: T) => P<T>) {
+    return PM.bindM2(p1, p2, combine)
+}
 
+export function sequenceMonadic3<T>(p1: P<T>, p2: P<T>, p3: P<T>, combine:(t1: T, t2: T, t3: T) => P<T>) {
+    return PM.bindM3(p1, p2, p3, combine)
+}
+/**
+ * Creates a new parser which
+ * -    Applies the argument `p` as many times as possible and returns success 
+ *      if at least one application is successful.
+ * -    The new parser T[] wrapped in PR.PResult where each element of the value array
+ *      is the T value from a single aplication of `p`
+ */
+export function many<T>(p: P<T>): P<T[]> {
+    function recurse(sinput: string): PP.PPair<Array<T>> {
+        const r = p(sinput)
+        if(Maybe.isNothing(r)) {
+            return PP.make([], sinput)
+        } else {
+            const rem = Maybe.get_value(r).remaining_input
+            const v = Maybe.get_value(r).value
+            const recurse_result = recurse(rem)
+            const rem2 = PP.get_remaining_input(recurse_result)
+            const recurse_value = PP.get_value(recurse_result)
+            const combined_value = [v].concat(recurse_value)
+            const y = PP.make(combined_value, rem2)
+            return y
+        }
+    }
+    return function (sinput: string): PR.PResult<T[]> {
+        const parse_result = recurse(sinput)
+        const v = 
+        
+        PP.get_value(parse_result)
+        const rem = PP.get_remaining_input(parse_result)
+        if(v.length ==0) {
+            return PR.make_failed()
+        } else {
+            const ret = PR.make(v, rem)
+            return ret
+        }
+    }
+}
+
+// import * as SP from "./string_primitives"
+// function test_many() {
+//     function test_many_1() {
+//         const p = many(SP.parseSingleDigit)
+//         const rr = p("123tyu")
+//         console.log(rr)
+//         const rr2 = p("wjwjwj")
+//         console.log(rr2)
+//         const rr3 = PM.bind(p, (ar) => PM.eta(ar.join(":")))("19374JJJJ")
+
+//         console.log(rr3)
+//     }
+//     test_many_1()
+// }
+// test_many()

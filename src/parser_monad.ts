@@ -149,3 +149,16 @@ export function liftM3<A,B,C, D>(pa: P<A>, pb: P<B>, pc: P<C>, f:(a:A, b:B, c: C
     const eta_f = (a: A, b: B, c: C) => {return eta(f(a, b, c))}
     return bindM3(pa, pb, pc, eta_f)
 }
+/**
+ * This function implements the "|" operator in a BNF notation.
+ * 
+ * It also makes the P monad into an `Alternative`
+ */
+export function choice<A>(p1: P<A>, p2: P<A>): P<A> {
+    return (s: string) => Maybe.choice(p1(s), p2(s))
+}
+
+function test() {
+    console.log(`hello`)
+}
+// test()

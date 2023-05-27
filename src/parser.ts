@@ -6,9 +6,11 @@ import {
     failed, isDone,
     make_result, make_failed, 
     ast_remain, ast_value} from "./ast_functions"
+import {assert} from "../tests/test_helpers"
 import * as AST from "./ast_functions"
 import * as PT from "./parser_pair"
 import * as PR from "./parser_result"
+import * as PM from "./parser_monad" 
 import {ParserType} from "./parser_type"
 import {parser_or, sequence} from "./parser_combiners"
 import {
@@ -17,6 +19,7 @@ import {
     parseAdditionSign, parsePlusSignToAst,
     parseOpenBracket, parseCloseBracket
 } from "./primitives"
+import { parseMultSignToString, parsePlusSignToString } from "./string_primitives"
 
 type P<T> = ParserType<T>
 /**
@@ -38,10 +41,16 @@ type P<T> = ParserType<T>
  * - if that fails try 
  *      term
 */
-export function expression(sinput: string): ParserResultAst {
+export const expression_2 = PM.choice(term_and_expression_3, term_only)
+export function expression_1(sinput: string): ParserResultAst {
     const r = parser_or([term_and_expression_2, term_only], sinput)
     return r
 }
+export const expression = expression_2
+
+/*
+*  term_and_expression variants
+*/
 export function term_and_expression_1(sinput: string): ParserResultAst {
     const s  = removeLeadingWhitespace(sinput)
     const t = term(s)
@@ -74,6 +83,19 @@ export function term_and_expression_2(sinput: string): ParserResultAst {
     } 
     return sequence([term, parseAdditionSign, expression], sinput, f)
 }
+export function term_and_expression_3(sinput: string): ParserResultAst {
+    function f(termNode: Ast, plussign: string, expNode: Ast): P<Ast> {
+        let newast = Tree.AddNode.make(termNode, expNode)
+        return PM.eta(newast)
+    } 
+    const newparser = PM.bindM3(term, parsePlusSignToString, expression, f)
+    return newparser(sinput)
+}
+export const term_and_expression = term_and_expression_3
+
+/*
+*  term_only
+*/
 export function term_only(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     const t = term(s)
@@ -83,17 +105,14 @@ export function term_only(sinput: string): ParserResultAst {
     const tnode = ast_value(t) as Tree.TreeNode
     return make_result(tnode, ast_remain(t))
 }
-/**
- * parse a term
- * - first try 
- *      term ::= factor * term 
- * - if that fails try 
- *      factor
-*/
+
 export function term(sinput: string): ParserResultAst {
     const rr = parser_or([factor_and_term_2, factor_only], sinput)
     return rr
 }
+/*
+* factor_and_term variants
+*/
 export function factor_and_term_1(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     let fac = factor(s)
@@ -125,6 +144,19 @@ export function factor_and_term_2(s: string): ParserResultAst {
     const rr = sequence([factor, parseMultiplySign, term], s, f)
     return rr
 }
+export function factor_and_term_3(sinput: string): ParserResultAst {
+    function f(factorNode: Ast, multsign: string, termNode: Ast): P<Ast> {
+        let newast = Tree.MultNode.make(factorNode, termNode)
+        return PM.eta(newast)
+    } 
+    const newparser = PM.bindM3(factor, parseMultSignToString, term, f)
+    return newparser(sinput)
+}
+export const factor_and_term = factor_and_term_3
+
+/*
+* factor
+*/
 export function factor_only(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     let fac = factor(s)
@@ -133,19 +165,15 @@ export function factor_only(sinput: string): ParserResultAst {
     }
     return fac
 }
-
-/**
- * parse a factor
- * - first try
- *      factor :== number
- * - if that fails try 
- *      factor = ( exp ) 
-*/
 export function factor(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
-    return parser_or([parse_number, parse_bracket], s)
+    return parser_or([parse_number, parse_bracket_1], s)
 }
-export function parse_bracket(sinput: string): ParserResultAst {
+
+/*
+* bracket variants
+*/
+export function parse_bracket_1(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     const openb = parseOpenBracket(s)
     if(failed(openb)) {
@@ -164,7 +192,11 @@ export function parse_bracket(sinput: string): ParserResultAst {
     const rnode = Tree.BracketNode.make(newexpnode)
     return make_result(rnode, rem)
 }
-export function parse_number(s: string) : ParserResultAst {
+export const parse_bracket = parse_bracket_1
+/*
+* number variants
+*/
+export function parse_number_1(s: string) : ParserResultAst {
 
     function isDigit(char: string) {
         return (char.length == 1) && (/^\d$/.test(char))
@@ -189,61 +221,63 @@ export function parse_number(s: string) : ParserResultAst {
         return make_result(numnode, rem)
     }
 }
+export const parse_number = parse_number_1
 
 
 /******************************************************************************/
 // Tests 
 /*******************************************************************************/
 
-export function test_parser() {
-    test_sequence()
-    test_add()
-    test_whitespace()
-    test_parse_number() 
-}
+// export function test_parser() {
+//     test_sequence()
+//     test_add()
+//     test_whitespace()
+//     test_parse_number() 
+// }
 
-function test_sequence() {
-    const r1 = factor_and_term_1("2 + 3")
-    const r2 = factor_and_term_2("2 + 3")
-    const r3 = factor_and_term_1("2 * 3")
-    const r4 = factor_and_term_2("2 * 3")
+// function test_sequence() {
+//     const r1 = factor_and_term_1("2 + 3")
+//     const r2 = factor_and_term_2("2 + 3")
+//     const r3 = factor_and_term_1("2 * 3")
+//     const r4 = factor_and_term_2("2 * 3")
 
-    const x1 = term_and_expression_1(" 2 + 3")
-    const x2 = term_and_expression_2(" 2 + 3")
+//     const x1 = term_and_expression_1(" 2 + 3")
+//     const x2 = term_and_expression_2(" 2 + 3")
 
-}
-function test_whitespace() {
-    let ss = " 1234"
-    const ss2 = removeLeadingWhitespace(ss)
-    const r1 = removeLeadingWhitespace("")
-    const r2 = removeLeadingWhitespace("  ff")
-    const r3 = removeLeadingWhitespace("hh")
-}
-function test_parse_number() {
-    const r1 = parse_number("")
-    const r2 = parse_number("aaa")
-    const r3 = parse_number("1")
-    const r4 = parse_number("123")
-    const r5 = parse_number("123 ")
-    const r6 = parse_number("123X ")
-    const r7 = parse_number("  123X ")
-}
-function test_add() {
-    function test_one(expression_str: string)
-    {
-        console.log(`testing string ${expression_str}`)
-        const r1 = expression(expression_str)
-        const s1 = treeAsString(ast_value(r1) as Tree.TreeNode)
-        const v1 = treeAsNumber(ast_value(r1) as Tree.TreeNode)
-        console.log(`input ${expression_str} result ${s1} value: ${v1} \n`)
-    }
-    test_one("1 + 2")
-    test_one("2 * 3")
-    test_one(" 1 + 2")
-    test_one(" 2 * 3")
-    test_one("2*(3 + 4)")
-    test_one("2*(3 + 4) + 3 + 4* 5")
-    test_one(" 2*(3+4) + 3+4* 5")
-    test_one(" 2*(3+4)+ 3+4* 5")
-}
-test_parser()
+// }
+// function test_whitespace() {
+//     let ss = " 1234"
+//     const ss2 = removeLeadingWhitespace(ss)
+//     const r1 = removeLeadingWhitespace("")
+//     const r2 = removeLeadingWhitespace("  ff")
+//     const r3 = removeLeadingWhitespace("hh")
+// }
+// function test_parse_number() {
+//     const r1 = parse_number("")
+//     const r2 = parse_number("aaa")
+//     const r3 = parse_number("1")
+//     const r4 = parse_number("123")
+//     const r5 = parse_number("123 ")
+//     const r6 = parse_number("123X ")
+//     const r7 = parse_number("  123X ")
+// }
+// function test_add() {
+//     function test_one(expression_str: string, expected_value: number)
+//     {
+//         console.log(`testing string ${expression_str}`)
+//         const r1 = expression(expression_str)
+//         const s1 = treeAsString(ast_value(r1) as Tree.TreeNode)
+//         const v1 = treeAsNumber(ast_value(r1) as Tree.TreeNode)
+//         assert(v1 == expected_value, `${v1} not equal ${expected_value} expected value failed`)
+//         console.log(`input ${expression_str} result ${s1} value: ${v1} \n`)
+//     }
+//     test_one("1 + 2", 3)
+//     test_one("2 * 3", 6)
+//     test_one(" 1 + 2", 3)
+//     test_one(" 2 * 3", 6)
+//     test_one("2*(3 + 4)", 14)
+//     test_one("2*(3 + 4) + 3 + 4* 5", 37)
+//     test_one(" 2*(3+4) + 3+4* 5", 37)
+//     test_one(" 2*(3+4)+ 3+4* 5", 37)
+// }
+// test_parser()
