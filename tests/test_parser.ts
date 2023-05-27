@@ -19,16 +19,8 @@ import {
     parseAdditionSign, parsePlusSignToAst,
     parseOpenBracket, parseCloseBracket
 } from "../src/primitives"
-import {
-    factor_and_term_1,
-    factor_and_term_2,
-    expression, expression_1, expression_2,
-    term_and_expression_1,
-    term_and_expression_2,
-    term_and_expression_3,
-    parse_number_1,
-    parse_bracket_1,
-} from "../src/parser"
+import * as P1 from "../src/parser_first"
+import * as P2 from "../src/parser_final"
 /******************************************************************************/
 // Tests 
 /*******************************************************************************/
@@ -56,10 +48,10 @@ function test_one_fail(p: (sinput: string) => PR.PResult<Ast>, sinput: string, m
 }
 
 function test_parser_01() {
-    test_one(factor_and_term_1, "2 * 3", "2 * 3", "testing factor_and_test_1 on 2 * 3")
-    test_one(factor_and_term_2, "2 * 3", "2 * 3", "testing factor_and_test_2 on 2 * 3")
-    test_one(term_and_expression_1, "2 + 3", "2 + 3", "testing term_and_expression_1 on 2 + 3")
-    test_one(term_and_expression_2, "2 + 3", "2 + 3", "testing term_and_expression_2 on 2 + 3")
+    test_one(P1.factor_and_term, "2 * 3", "2 * 3", "testing factor_and_test_1 on 2 * 3")
+    test_one(P2.factor_and_term, "2 * 3", "2 * 3", "testing factor_and_test_2 on 2 * 3")
+    test_one(P1.term_and_expression, "2 + 3", "2 + 3", "testing term_and_expression_1 on 2 + 3")
+    test_one(P2.term_and_expression, "2 + 3", "2 + 3", "testing term_and_expression_2 on 2 + 3")
 
     
 }
@@ -100,7 +92,7 @@ function test_expression() {
             test_one(p, "123X ", "123", `testing "123X "`)
             test_one(p, "  123X ", "123", `testing "  123X "`)
         }
-        test_one_number(parse_number_1)
+        test_one_number(P1.parse_number)
     }
     function test_all_brackets_parser() {
         function tests_one_brackets_parser(p: ParserType<Ast>) {
@@ -108,7 +100,7 @@ function test_expression() {
             test_one(p, " ( 1 * 2)", "(1 * 2)", `testing brackets`)
             test_one(p, "(1 * 2*3)", "(1 * 2 * 3)", `testing term_and_factor`)
         }
-        tests_one_brackets_parser(parse_bracket_1)
+        tests_one_brackets_parser(P1.parse_bracket)
     }
     function test_all_factor_and_term() {
         function tests_one_term_and_factor_parser(p: ParserType<Ast>) {
@@ -116,8 +108,9 @@ function test_expression() {
             test_one(p, "1 * 2*  3", "1 * 2 * 3", `testing term_and_factor`)
             test_one(p, "1 * 2*3", "1 * 2 * 3", `testing term_and_factor`)
         }
-        tests_one_term_and_factor_parser(factor_and_term_1)
-        tests_one_term_and_factor_parser(factor_and_term_2)
+        tests_one_term_and_factor_parser(P1.factor_and_term)
+        tests_one_term_and_factor_parser(P1.factor_and_term_2)
+        tests_one_term_and_factor_parser(P2.factor_and_term)
     }
     function test_all_term_and_expression() {
         function tests_one_term_and_expression_parser(p: ParserType<Ast>) {
@@ -125,9 +118,8 @@ function test_expression() {
             test_one(p, "1 + 2+  3", "1 + 2 + 3", `testing term_and_expression`)
             test_one(p, "1 + 2+3", "1 + 2 + 3", `testing term_and_expression`)
         }
-        tests_one_term_and_expression_parser(term_and_expression_1)
-        tests_one_term_and_expression_parser(term_and_expression_2)
-        tests_one_term_and_expression_parser(term_and_expression_3)
+        tests_one_term_and_expression_parser(P1.term_and_expression)
+        tests_one_term_and_expression_parser(P2.term_and_expression)
     }
 
 
@@ -142,8 +134,8 @@ function test_expression() {
             test_one(p, " 2*(3+4) + 3+4* 5",    "2 * (3 + 4) + 3 + 4 * 5", `testing expression("2*(3 + 4) + 3+4* 5")`)
             test_one(p, " 2*(3+4)+ 3+4* 5",     "2 * (3 + 4) + 3 + 4 * 5", `testing expression(" 2*(3+4)+ 3+4* 5")`)
         }
-        tests_one_expression_parser(expression_1)
-        tests_one_expression_parser(expression_2)
+        tests_one_expression_parser(P1.expression)
+        tests_one_expression_parser(P2.expression)
     }
     test_all_number()
     test_all_brackets_parser()

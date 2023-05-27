@@ -98,7 +98,7 @@ export function parseSingleDigit(sinput: string): Maybe.Maybe<PP.PPair<string>> 
  * Return a parser that parses the next single character in the input if it satisfies 
  * a predicate
  */
-function createPredicateParser(predicate: (ch: string) => boolean): PT.ParserType<string> {
+export function createPredicateParser(predicate: (ch: string) => boolean): PT.ParserType<string> {
     return (sinput: string) => {
         if((sinput.length == 0) || (! predicate(sinput.substring(0,1))))
             return Maybe.nothing()
@@ -107,7 +107,7 @@ function createPredicateParser(predicate: (ch: string) => boolean): PT.ParserTyp
         return Maybe.just(PP.make(value, remainder))
     }
 }
-function createPredicateParserStripLeadingWhiteSpace(predicate: (ch: string) => boolean): PT.ParserType<string> {
+export function createPredicateParserStripLeadingWhiteSpace(predicate: (ch: string) => boolean): PT.ParserType<string> {
     return function (sinput: string) {
         const newinput = removewhitespace(sinput)
         return createPredicateParser(predicate)(newinput)

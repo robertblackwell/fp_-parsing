@@ -3,6 +3,7 @@ import * as PR from "../src/parser_result"
 import * as PT from "../src/parser_type"
 import * as Maybe from "../src/maybe"
 import * as APP from "../src/parser_applicative"
+import * as C from "ansi-colors"
 
 export type P<T> = APP.P<T>
 
@@ -11,7 +12,7 @@ export type P<T> = APP.P<T>
  */
 export function assert(condition: boolean, msg: string) {
     if(!condition) {
-        console.log(`assert failed msg: ${msg}`)
+        console.log(C.red(`assert failed msg: ${msg}`))
     }
 }
 /**
