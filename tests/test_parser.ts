@@ -6,7 +6,7 @@ import {
     failed, isDone,
     make_result, make_failed, 
     ast_remain, ast_value} from "../src/ast_functions"
-import {assert} from "./test_helpers"
+import {assert} from "../simple_test/simple_test"
 import * as Maybe from "../src/maybe"
 import * as AST from "../src/ast_functions"
 import * as PT from "../src/parser_pair"

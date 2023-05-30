@@ -6,8 +6,6 @@ import {
     failed, isDone,
     make_result, make_failed, 
     ast_remain, ast_value} from "./ast_functions"
-import {assert} from "../tests/test_helpers"
-import * as AST from "./ast_functions"
 import * as PT from "./parser_pair"
 import * as PR from "./parser_result"
 import * as PM from "./parser_monad" 

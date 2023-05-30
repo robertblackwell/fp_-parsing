@@ -221,6 +221,34 @@ function createOneOrMoreParser(singleChParser: PT.ParserType<string>) {
     }
     return manyTimes
 }
+
+export function whitespace(sinput: string): string {
+    let s= sinput.slice(0)
+    while((s.length > 0)&&(s.substring(0,1) == " ")) {
+        s = s.slice(1)
+    }
+    return s
+}
+export function make_parser_regex(regex: RegExp): PT.P<string> {
+    return function alphas(sinput: string): PR.PResult<string> {
+        let s = whitespace(sinput)
+        // const regex = /[A-Za-z]/g
+        let result = ""
+        while((s.length > 0) && (s.substring(0,1).match(regex))) {
+            result = `${result}${s.substring(0,1)}`
+            s = s.slice(1)
+        }
+        if(result != "") {
+            return PP.make(result, s)
+        } else {
+            return Maybe.nothing()
+        }
+    }
+}
+export const alphas = make_parser_regex(/[A-Za-z]/g)
+export const numeric = make_parser_regex(/[0-9]/g)
+
+
 // function createOneOrMoreParser_new(singleChParser: PT.ParserType<string>) {
 //     // throw new Error(`createOneOrMoreParser_new does not work - dont callit`)
 //     function manyTimes(sinput: string): Maybe.Maybe<PP.PPair<string>> {

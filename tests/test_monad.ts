@@ -3,7 +3,7 @@ import * as PR from "../src/parser_result"
 import * as PT from "../src/parser_type"
 import * as Maybe from "../src/maybe"
 import * as M from "../src/parser_monad"
-import {P, assert, display_one, display_two, display_three, alphas, numeric} from "./test_helpers"
+import {P, assert, display_one, display_two, display_three, alphas, numeric} from "../simple_test/simple_test"
 
 function tests_mu() {
     function p1(s:string): PR.PResult<string> {
