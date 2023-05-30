@@ -4,7 +4,7 @@
     "description": "",
     "main": "src/main.js",
     "scripts": {
-        "test": "node_modules/.bin/ts-mocha \"test/**/*.spec.ts\"",
+        "test": "ts-node test/all.spec.ts",
         "build": "rm -rf ./build/* && tsc",
         "start": "npm run build && node build/src/main.js",
         "start:dev": "nodemon"
