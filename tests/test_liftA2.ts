@@ -17,14 +17,17 @@ import {assert, display_one, display_two, display_three, alphas, numeric} from "
  * 
  * The purpose of this set of tests to to demonstrate that all implementations of `liftA2` are the same
  */
+type P<T> = PT.ParserType<T>
+type LiftA2Type = <A, B, C>(f: (a: A, b: B) => C) => (x: P<A>, y: P<B>) => P<C>
+
 export function test_liftA2()
 {
-    let test_liftA2 = APP.liftA2_impl_naive
+    // let test_liftA2 = APP.liftA2_impl_naive
 
-    function test_one_liftA2_implementation() {
+    function test_one_liftA2_implementation(test_liftA2: LiftA2Type) {
         // const ttwo = pure(Kurry2(two))
         // const ff = ap<string, (s: string)=>string>(ttwo, alpha)
-        function test_liftA_01() {
+        function test_liftA_01(test_liftA2: LiftA2Type) {
             /**
              * parse two consecutive alpha strings
              */
@@ -36,7 +39,7 @@ export function test_liftA2()
             // console.log(result)
             console.log("test_liftA2_01 done")
         }
-        function test_liftA_02() {
+        function test_liftA_02(test_liftA2: LiftA2Type) {
             /**
              * parse an alpha followed by a numeric strings
              */
@@ -48,7 +51,7 @@ export function test_liftA2()
             // console.log(result)
             console.log("test_liftA2_02 done")
         }
-        function test_liftA_03() {
+        function test_liftA_03(test_liftA2: LiftA2Type) {
             /**
              * parse an alpha followed by a numeric strings but fail as no numeric
              */
@@ -57,15 +60,17 @@ export function test_liftA2()
             assert(Maybe.isNothing(result), "test liftA2 03 should fail")
             console.log("test_liftA2_03 done")
         }
-        test_liftA_01()
-        test_liftA_02()
-        test_liftA_03()
+        test_liftA_01(test_liftA2)
+        test_liftA_02(test_liftA2)
+        test_liftA_03(test_liftA2)
     }
-    test_liftA2 = APP.liftA2_impl_naive
-    test_one_liftA2_implementation()
-    test_liftA2 = APP.liftA2_impl_ap
-    test_one_liftA2_implementation()
-    test_liftA2 = APP.liftA2_impl_monad
-    test_one_liftA2_implementation()
+    test_one_liftA2_implementation(APP.liftA2_impl_naive)
+    test_one_liftA2_implementation(APP.liftA2_impl_ap)
+    test_one_liftA2_implementation(APP.liftA2_impl_monad)
 }
-// test_liftA2()
+export function test() {
+    test_liftA2()
+}
+if (typeof require !== 'undefined' && require.main === module) {
+    test();
+}

@@ -10,7 +10,7 @@ import {assert, display_one, display_two, display_three} from "./test_helpers"
  * However even in Haskell the `do{}` construct is only syntactic sugar for `ma >>= (x -> mb >>= (y -> ...... (z-> f(x,y, ...z))))`.
  * This can be demonstrated in typescript.
  */
-export function test_do() {
+function test_do() {
     function div(a: number, b: number): Maybe.Maybe<number> {
         if( b > -0.1 && b < 0.1) 
             return Maybe.nothing()
@@ -75,4 +75,11 @@ export function test_do() {
     test_do_02()
     test_do_03()
 }
+export function test() {
+    test_do()
+}
+if (typeof require !== 'undefined' && require.main === module) {
+    test();
+}
+
 // test_do();

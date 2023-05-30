@@ -48,6 +48,53 @@
             "request": "launch",
             "name": "fold.js",
             "program": "${workspaceFolder}/src/fold.js",
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "A Single Mocha test",
+            "program": "${workspaceFolder}/node_modules/.bin/mocha",
+            "args": [
+                "-r",
+                "ts-node/register",
+                "--timeout",
+                "999999",
+                "--colors",
+                "${workspaceFolder}/test/mocha.spec.ts",
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Mocha Tests",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "args": [
+              "--no-timeouts",
+              "--colors",
+              "**/${fileBasenameNoExtension}.js"
+            ],
+            "internalConsoleOptions": "openOnSessionStart",
+            "openDebug": "openOnDebugBreak",
+            "sourceMaps": true,
+            "outFiles": [
+              "${workspaceFolder}/lib/**/*.js"
+            ]
+          },
+          {
+            "name": "Run Mocha",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+            "args": [
+                "--no-timeouts",
+                "--require",
+                "ts-node/register",
+                "${workspaceRoot}/test/mocha.spec.ts"
+            ],
+            "cwd": "${workspaceRoot}",
         }
+        
     ]
 }

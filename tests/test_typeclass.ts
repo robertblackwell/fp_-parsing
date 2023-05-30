@@ -80,3 +80,9 @@ class Maybe<T> extends Monad<T> {
         return Maybe.get_value(tt)
     }
 }
+export function test() {
+    
+}
+if (typeof require !== 'undefined' && require.main === module) {
+    test();
+}

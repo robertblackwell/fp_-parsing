@@ -121,6 +121,12 @@ function test_oneormore_parser() {
     const r2 = p2(test_input)
     console.log(r2)
 }
-// test_oneormore_parser()
-test_many()
-// test_combinators()
+export function test() {
+    test_oneormore_parser()
+    test_choice()
+    test_combinators()
+    test_many()
+}
+if (typeof require !== 'undefined' && require.main === module) {
+    test();
+}

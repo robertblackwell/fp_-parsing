@@ -181,7 +181,7 @@ function parseSum_old(sinput: string): Maybe.Maybe<PP.PPair<number>> {
     }
     return r3
 }
-function parseSum(sinput: string): Maybe.Maybe<PP.PPair<number>> {
+export function parseSum(sinput: string): Maybe.Maybe<PP.PPair<number>> {
     const s = removewhitespace(sinput)
     const r1 = parseNumber(s)
     function combine(n1: number, plus: string, n2: number): number {return n1 + n2}

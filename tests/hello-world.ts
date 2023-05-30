@@ -1,0 +1,1 @@
+console.log(`hellow world this is tests/hello-world.ts`)

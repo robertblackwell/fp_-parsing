@@ -238,7 +238,7 @@ export function parse_number(s: string) : ParserResultAst {
             return {numstr: "", rem: str}
         } 
     }
-    let {numstr, rem} = extractNumber(s)
+    let {numstr, rem} = extractNumber(removeLeadingWhitespace(s))
     if(numstr == "") {
         return make_failed()
     } else {
