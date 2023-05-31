@@ -17,27 +17,6 @@ type StringParserResult = PR.PResult<string>
 //     return function(sinput: string):  
 // }
 /**
- * Make a parser that looks for a ch and produces an Ast 
- * NOTE: The repertoire of such parsers such parsers is restricted by 
- * the definition of Ast/Tree.TreeNode and what chars/strings can be used 
- * to make Ast instances.
- * numbers 
-*/
-export function makeCharAstParser(ch: string): ParserAst {
-    if(ch.length != 1) {
-        throw new Error(`makeCharParser ch is too long ${ch}`)
-    }
-    return function(s: string): ParserResultAst {
-        let s2 = removeLeadingWhitespace(s)
-        if(s2.substring(0, 1) == ch) {
-            const ast = Tree.CharNode.make(ch) as Tree.TreeNode as Ast
-            const remstr = removeLeadingWhitespace(s2.slice(1))
-            return AST.make_result(ast, remstr)
-        }
-        return AST.make_failed()        
-    }
-}
-/**
  * This is the same as the makeCharAstParser but the result is PR.PResult<string> 
  * and hence can be applied to any string regardless of the nature of the Ast
  */
@@ -56,20 +35,41 @@ export function makeCharStringParser(ch: string): StringParser {
 }
 
 
-export function parsePlusSignToAst(s: string): ParserResultAst {
-    const f = makeCharAstParser("+")
-    return f(s)
+/**
+ * Make a parser that looks for a ch and produces an Ast 
+ * NOTE: The repertoire of such parsers is restricted by 
+ * the definition of Ast/Tree.TreeNode and what chars/strings can be used 
+ * to make Ast instances.
+ * numbers 
+*/
+export function makeCharAstParser(ch: string): ParserAst {
+    if(ch.length != 1) {
+        throw new Error(`makeCharParser ch is too long ${ch}`)
+    }
+    return function(s: string): ParserResultAst {
+        let s2 = removeLeadingWhitespace(s)
+        if(s2.substring(0, 1) == ch) {
+            const ast = Tree.CharNode.make(ch) as Tree.TreeNode as Ast
+            const remstr = removeLeadingWhitespace(s2.slice(1))
+            return AST.make_result(ast, remstr)
+        }
+        return AST.make_failed()        
+    }
 }
-export function parseAdditionSign(sinput: string): ParserResultAst {
+// export function parsePlusSignToAst(s: string): ParserResultAst {
+//     const f = makeCharAstParser("+")
+//     return f(s)
+// }
+export function parseAdditionSignToAst(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     const f = makeCharAstParser("+")
     return f(s)
 }
-export function parseMultSign(s: string): ParserResultAst {
-    const f = makeCharAstParser("*")
-    return f(s)
-}
-export function parseMultiplySign(sinput: string): ParserResultAst {
+// export function parseMultSignToAst(s: string): ParserResultAst {
+//     const f = makeCharAstParser("*")
+//     return f(s)
+// }
+export function parseMultiplySignToAst(sinput: string): ParserResultAst {
     const s = removeLeadingWhitespace(sinput)
     const f = makeCharAstParser("*")
     return f(s)
@@ -90,8 +90,8 @@ export function removeLeadingWhitespace(s: string): string {
     }
     return s.slice(0)
 }
-export function parseNumberToAst(sinput: string): ParserResultAst {
-    const f = (n: number) => (PM.eta(Tree.NumberNode.make(n) as Ast))
-    const r = PM.bind(parseNumber, f)
-    return r(sinput)
-}
+// export function parseNumberToAst(sinput: string): ParserResultAst {
+//     const f = (n: number) => (PM.eta(Tree.NumberNode.make(n) as Ast))
+//     const r = PM.bind(parseNumber, f)
+//     return r(sinput)
+// }

@@ -4,7 +4,7 @@ import * as PT from "../src/parser_type"
 type P<T> = PT.P<T>
 import * as Maybe from "../src/maybe"
 import * as M from "../src/parser_monad"
-import * as SP from "../src/string_primitives"
+import * as SP from "../src/final/primitives"
 import * as ST from "../simple_test/simple_test"
 import {display_one, display_two, display_three} from "../tests/test_helpers"
 const alphas = SP.alphas

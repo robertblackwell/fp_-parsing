@@ -1,23 +1,21 @@
-import * as Tree from "./tree"
-import {treeAsNumber, treeAsString} from "./walker"
-import {
-    Ast, 
-    ParserTupleAst, ParserResultAst, 
-    failed, isDone,
-    make_result, make_failed, 
-    ast_remain, ast_value} from "./ast_functions"
-import * as PM from "./parser_monad" 
-import * as PA from "./parser_applicative"
-import {ParserType} from "./parser_type"
-import * as PC from "./parser_combiners"
-import {
-    removeLeadingWhitespace,
-    parseMultSign, parseMultiplySign,
-    parseAdditionSign, parsePlusSignToAst,
-    parseOpenBracket, parseCloseBracket
-} from "./primitives"
-import { parseMultSignToString, parsePlusSignToString, createPredicateParser, createPredicateParserStripLeadingWhiteSpace } from "./string_primitives"
+import * as Tree from "../tree"
+import {Ast, ParserResultAst} from "../ast_functions"
+import * as PM from "../parser_monad" 
+import * as PA from "../parser_applicative"
+import {ParserType} from "../parser_type"
+import * as PC from "./combiners"
+import { 
+    createPredicateParser, 
+    createPredicateParserStripLeadingWhiteSpace } from "./primitives"
 
+const parseMultSignToString = createPredicateParserStripLeadingWhiteSpace((s: string) => (s == "*")) 
+const parsePlusSignToString = createPredicateParserStripLeadingWhiteSpace((s: string) => (s == "+")) 
+export function removeLeadingWhitespace(s: string): string {
+    if((s.length > 0) && (s.substring(0, 1) == " ")) {
+        return removeLeadingWhitespace(s.slice(1))
+    }
+    return s.slice(0)
+}
 type P<T> = ParserType<T>
 /**
  * This file contains the parsers/functions that parser an aritmetic expression.

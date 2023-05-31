@@ -1,18 +1,20 @@
-import * as Maybe from "./maybe"
+import * as Maybe from "../maybe"
 import {
     Ast, 
     ParserTupleAst, ParserResultAst, ParserAst,
     failed,
     make_result, make_failed, 
-    ast_remain, ast_value} from "./ast_functions"
-import * as AST from "./ast_functions"
-import * as PP from "./parser_pair"
-import * as PR from "./parser_result"
-import * as PT from "./parser_type"
-import * as APP from "./parser_applicative"
-import * as PM from "./parser_monad"
-import {ParserType} from "./parser_type"
+    ast_remain, ast_value} from "../ast_functions"
+import * as AST from "../ast_functions"
+import * as PP from "../parser_pair"
+import * as PR from "../parser_result"
+import * as PT from "../parser_type"
+import * as APP from "../parser_applicative"
+import * as PM from "../parser_monad"
+import {ParserType} from "../parser_type"
 import {removeLeadingWhitespace} from "./primitives"
+
+// type ParserTupleAst = PP.PPair<Ast>
 type P<T> = ParserType<T>
 /**
  * This file provides two functions for combining parsers typically called "alternative" 
@@ -182,16 +184,17 @@ export function createOneOrMoreParser_new(singleChParser: PT.ParserType<string>)
 export function sequence(ps: Array<ParserAst>, sinput: string, combine:(rs:Array<ParserTupleAst>)=>ParserTupleAst): ParserResultAst {
     let s = removeLeadingWhitespace(sinput)
     let index = 0
-    let results = []
+    let results: ParserTupleAst[] = []
     while(index < ps.length) {
         const parser = ps[index]
         const r = parser(s)
         if(failed(r)) {
             return make_failed()
+        } else {
+            results.push(r as ParserTupleAst)
+            s = removeLeadingWhitespace(ast_remain(r))
+            index += 1
         }
-        results.push(r as ParserTupleAst)
-        s = removeLeadingWhitespace(ast_remain(r))
-        index += 1
     }
     if(results.length != ps.length) {
         throw new Error(`sequence successful result has wrong number of components`)

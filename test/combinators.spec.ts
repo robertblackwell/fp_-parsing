@@ -4,9 +4,12 @@ import * as PT from "../src/parser_type"
 import * as PM from "../src/parser_monad"
 import * as Maybe from "../src/maybe"
 import * as APP from "../src/parser_applicative"
-import * as COMB from "../src/parser_combiners"
-import * as PRIM from "../src/string_primitives"
+import * as COMB from "../src/first/combiners"
+import * as PRIM from "../src/first/primitives"
+import * as FinalPrim from "../src/final/primitives"
 import * as ST from "../simple_test/simple_test"
+
+const parseSingleDigit = FinalPrim.parseSingleDigit
 
 function parseDigit(sinput: string) {
     let s = sinput.slice(0)
@@ -77,7 +80,7 @@ ST.register("test_combinators_oneormore_02", () => {
 })
 
 ST.register("test_many_1", () => {
-    const p = COMB.many(PRIM.parseSingleDigit)
+    const p = COMB.many(parseSingleDigit)
     const rr = p("123tyu")
     ST.assert(Maybe.isNothing(rr) == false, "should not fail")
     const v1 = Maybe.get_value(rr)
@@ -97,7 +100,7 @@ ST.register("test_many_1", () => {
 })
 ST.register("test_oneormore_parser", () => {
     const test_input = "1234hhhh"
-    const p2 = COMB.createOneOrMoreParser_new(PRIM.parseSingleDigit)
+    const p2 = COMB.createOneOrMoreParser_new(parseSingleDigit)
     const r2 = p2(test_input)
     //console.log(r2)
 })

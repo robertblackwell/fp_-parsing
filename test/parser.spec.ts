@@ -1,11 +1,6 @@
 import * as Tree from "../src/tree"
 import {treeAsNumber, treeAsString} from "../src/walker"
-import {
-    Ast, 
-    ParserTupleAst, ParserResultAst, 
-    failed, isDone,
-    make_result, make_failed, 
-    ast_remain, ast_value} from "../src/ast_functions"
+import {Ast, ast_remain, ast_value} from "../src/ast_functions"
 import {assert} from "../simple_test/simple_test"
 import * as ST from "../simple_test/simple_test"
 import * as Maybe from "../src/maybe"
@@ -13,15 +8,8 @@ import * as AST from "../src/ast_functions"
 import * as PT from "../src/parser_pair"
 import * as PR from "../src/parser_result"
 import {ParserType} from "../src/parser_type"
-import {parser_or, sequence} from "../src/parser_combiners"
-import {
-    removeLeadingWhitespace,
-    parseMultSign, parseMultiplySign,
-    parseAdditionSign, parsePlusSignToAst,
-    parseOpenBracket, parseCloseBracket
-} from "../src/primitives"
-import * as P1 from "../src/parser_first"
-import * as P2 from "../src/parser_final"
+import * as P1 from "../src/first/parser_first"
+import * as P2 from "../src/final/parser_final"
 
 /******************************************************************************/
 // Tests 

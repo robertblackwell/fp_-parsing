@@ -3,7 +3,7 @@ import * as PR from "../src/parser_result"
 import * as PT from "../src/parser_type"
 import * as Maybe from "../src/maybe"
 import * as APP from "../src/parser_applicative"
-import * as SP from "../src/string_primitives"
+import * as SP from "../src/final/primitives"
 import * as ST from "../simple_test/simple_test"
 import {display_one, display_two, display_three} from "../tests/test_helpers"
 const alphas = SP.alphas

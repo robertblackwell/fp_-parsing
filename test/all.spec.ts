@@ -6,7 +6,6 @@ const spec_modules = [
     "./do.spec", 
     "./combinators.spec",
     "./parser.spec",
-    "./string_primitives.spec",    
 ]
 async function loadSpecs(spec_modules: string[]) {
     for await (let mod of spec_modules) {

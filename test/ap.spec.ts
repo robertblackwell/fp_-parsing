@@ -4,7 +4,7 @@ import * as PT from "../src/parser_type"
 import * as Maybe from "../src/maybe"
 import * as APP from "../src/parser_applicative"
 import * as ST from "../simple_test/simple_test"
-import * as SP from "../src/string_primitives"
+import * as SP from "../src/final/primitives"
 const alphas = SP.alphas
 const numeric = SP.numeric
 function display_one(s: string): string {
