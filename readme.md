@@ -10,4 +10,14 @@ In a way the point of this implementation is to:
 
 -  show the how to build a parser by combining simple parsers without the confusion of abstract mathematical terminology,
 -  to demonstrate the repetition of code patterns that emerge when doing the privious point,
--   in the hope that a programmer not versed in all the FP stuff will get some insight into the __why__ of the mathematical machinery  
+-   in the hope that a programmer not versed in all the FP stuff will get some insight into the __why__ of the mathematical machinery 
+
+https://stackoverflow.com/questions/45712106/why-are-promises-monads
+
+https://write.yiransheng.com/callcc
+
+https://itnext.io/continuations-in-typescript-db18402010bc
+
+https://curiosity-driven.org/monads-in-javascript
+
+https://maxhallinan.com/posts/2019/10/22/how-does-the-continuation-monad-work/
