@@ -5,7 +5,6 @@
 This project is a personal learning exercise in which my goal is to develop a parser for arithmetic expressions
 using the FP/Category Theory machinery of Functors, Applicatives, and Monads.
 
-
 ### Motivation
 
 I have been dabbling with functional programming in Haskell and Ocaml for sometime but have found
@@ -37,7 +36,7 @@ In CT the notation `A -> B` represents a particular arrow/function between two o
 The Haskell notation `a -> b` is a type, specifically the type of all arrows from `a` to `b`, and is another object is the Hask category.
 
 The equivalent in CT is `B superscript A` or sometimes `[A, B]`, or sometimes `A => B` and is an __object in the Hask category__. This is what makes __Hask__
-a __closed category__.  
+a __closed category__.  See more below.
 
 So if `M` (or `m` in Haskell) is a functor in CT `M(A->B)` is the functor applied to an arrow `f:A->B`. In Haskell this would be `fmap(f)`.
 
@@ -57,7 +56,7 @@ Together `AxB` and `[A, B]` make Hask a catersian/monoidal closed category, whic
 
 ### An exposition as well as a parser
 
-In addition to providing typescript code that impements an Applicative and/or Monadic parser I hope to explain and document for myself
+In addition to providing typescript code that implements an Applicative and/or Monadic parser I hope to explain and document for myself
 the various relationships between Applicatives and Monads and their various formulations. I apologize in advance because this additional goal
 will force me at times to dive into the category theory and to use more CT like notation.  Hence the next heading is intended to provide a bit of
 a reference if things get confusing.
@@ -82,7 +81,7 @@ but without using any of the machinery of Functors, Applicatives, Monads. At lea
 
 I have kept that solution for the purposes of illustration and comparison in the sub directory `initial-solution`.
 
-My final solution using the power of Functors, Applicatives and Monads is in the `src` sub directory and the `tests` directory
+My final solution using the power of Functors, Applicatives and Monads is in the `src` sub directory. The `tests` directory
 runs a series of unit tests of the pieces and final solution.
 
 ### Anatomy of the solutions

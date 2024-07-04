@@ -50,8 +50,8 @@ function apply<A, B>(a: P<A>, f: P<(a:A) => B>): P<B> {
             return Maybe.nothing()
         } 
         const just_g_sprime = Maybe.get_value(fs)
-        const g = PP.first(just_g_sprime)
-        const sprime = PP.second(just_g_sprime)
+        const g = just_g_sprime.value//PP.first(just_g_sprime)
+        const sprime = just_g_sprime.remaining_input//PP.second(just_g_sprime)
         const pb =fmap(g)(a)(sprime)
         return pb
     } 
@@ -163,10 +163,10 @@ export function ap_impl_naive<A, B>(f: P<(x:A) => B>, pa: P<A>): P<B> {
             return Maybe.nothing()
         } else {
             const justgsprime = Maybe.get_value(fs)
-            const gg = PP.first(justgsprime)
-            const g = PP.get_value(justgsprime)
-            const sprime2 = PP.second(justgsprime)
-            const sprime = PP.get_remaining_input(justgsprime)
+            const gg = justgsprime.value//PP.first(justgsprime)
+            const g = justgsprime.value//PP.get_value(justgsprime)
+            const sprime2 = justgsprime.remaining_input//PP.second(justgsprime)
+            const sprime = justgsprime.remaining_input //PP.get_remaining_input(justgsprime)
             const pb = fmap(g)(pa)(sprime)
             return pb
         }
@@ -293,16 +293,16 @@ export function liftA2_impl_naive<A, B, C>(f: (a: A, b: B) => C): (x: P<A>, y: P
                 return Maybe.nothing()
             } 
             const gpair = Maybe.get_value(gs)
-            const sprime = PP.second(gpair)
-            const gv = PP.first(gpair)
+            const sprime = gpair.remaining_input//PP.second(gpair)
+            const gv = gpair.value//PP.first(gpair)
             // breaking gpair into components eg gpair = [gv, sprime]
             const hs = h(sprime) 
             if(Maybe.isNothing(hs)) {
                 return Maybe.nothing()
             }
             const hpair = Maybe.get_value(hs)
-            const sdoubleprime = PP.second(hpair)
-            const hv = PP.first(hpair)
+            const sdoubleprime = hpair.remaining_input//PP.second(hpair)
+            const hv = hpair.value//PP.first(hpair)
             // beaking hpair into components eg hpair = [hv, sdoubleprime]
             const cval = f(gv, hv)
             const result = Maybe.just(PP.make(cval, sdoubleprime))

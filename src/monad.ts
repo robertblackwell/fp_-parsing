@@ -8,7 +8,7 @@
  *          `eta(a: A): M<A>`
  *          `mu(mma: M<M<A>>): M<A>)`
  *          `kliesli((f:(a: A) => M<B>): (ma: M<A>) => M<B>`
- *          `bind(ma: M<A>, f:(a: A) -> B): M<B>`
+ *          `bind(ma: M<A>, f:(a: A) -> M<B>): M<B>`
  *          `liftA2:(f:(a:A, b:B) => C): (ma:M<A>, mb: M<B>) => M<C>
  *          `app(f:(a:A) => B, ma: M<A>): M<B>
  *          

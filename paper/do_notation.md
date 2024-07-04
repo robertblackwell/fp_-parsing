@@ -2,12 +2,12 @@
 
 What problem does the Haskell `do` solve.
 
-Consider you have two functions `f :: X -> M A` and `g :: Y -> M B` which do some
-caclulation that prepares input for a final "bring it all together" calculation
+Consider you have two functions `f :: X -> M A` and `g :: Y -> M B` 
+which do some calculation that prepares input for a final "bring it all together" calculation
 represented by a function `k :: (A, B) -> M C`.
 
 As you can see all of these functions produce a `Monadic` result, maybe each calculation 
-required some `IO` and `ma` may have failed so `M A` may equal `IO Maybe A`. But for the moment
+required some `IO` and `M A` may have failed so `M A` may equal `IO Maybe A`. But for the moment
 lets assume that `M = Maybe` (no IO).
 
 How would we apply `k` to the outcomes of `f` and `g`.
@@ -15,7 +15,7 @@ How would we apply `k` to the outcomes of `f` and `g`.
 In a typical imperative language we would write something like this:
 
 ```typescript
-function combine(ma: M A, mb: M B, k: (A, B) -> M C)
+function combine(ma: M A, mb: M B, k: (A, B) -> M C): M C {
 
     if(ma.isNothing() || mb.isNothing()) {
         return Maybe.nothing()
@@ -74,16 +74,11 @@ Proof:
 
 The calculation above is the proof.
 
-### Corollary
-
-
-
-## 2.0 
-A more "categorical" approach
+## A more "categorical" approach
 
 So the above calculations seem to work but for me they are a computer scientists solution not a category theorists solution.
 
-Is there a "higher level" way of achieving the same end that operates at the level of "arrows" rather thannitty-gritty calculations.
+Is there a "higher level" way of achieving the same end that operates at the level of "arrows" rather than nitty-gritty calculations.
 
 The answer of course is __YES__. In fact a little more is possible.
 
@@ -100,15 +95,15 @@ the preceeding entry with the justification being given in the second column.
 |----|-----------------------|---------------------------------------------------------------|
 | 1. |   `p: A x B -> M C`   | The given or starting function |
 | 2. |   `A -> [B, M C]`     | The closed category isomorphism or currying of  `p` |
-| 3. |   `A -> [M B, M C]`   | By applying the Kliesli or Monad extension theorem |
-| 4. |   `A x M B -> M C`    | Theclosed category isomorphism or reverse currying |
+| 3. |   `A -> [M B, M C]`   | By applying the Kliesli or Monad extension theorem on the right side |
+| 4. |   `A x M B -> M C`    | The closed category isomorphism or reverse currying |
 | 5. |   `M B x A -> M C`    | Commutativity (up to isomorphism) of cartesian product |
 | 6. |   `M B -> [A, M C]`   | By currying |
 | 7. |   `M B -> [M A, M C]` | By apply the Kliesli or Monad extension theorem |
 | 8. |   `M B x M A -> M C`  | By un currying |
 | 9. |   `M A x M B -> M C`  | commutativity (up to isomorphism) of cartesian product  |
 
-Now lets take some of these functions and dediuce the formular for them.
+Now lets take some of these functions and deduce the formular for them.
 
 Equation 2. `A -> [B, M C]` is defined by `\a -> (\b -> p(a, b))`
 

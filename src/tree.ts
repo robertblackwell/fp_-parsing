@@ -1,15 +1,16 @@
 
 type TreeNodeType = "number" | "bracket" | "add" | "mult" | "char" | "plussign" | "multsign"
+
 export abstract class TreeNode {
     node_type: TreeNodeType
-    constructor(t: TreeNodeType) {
+    protected constructor(t: TreeNodeType) {
         this.node_type = t
     }
 }
 
 export class NumberNode extends TreeNode {
     value: number
-    constructor(v: number) {
+    private constructor(v: number) {
         super("number")
         this.value = v
     }
@@ -19,7 +20,7 @@ export class NumberNode extends TreeNode {
 }
 export class CharNode extends TreeNode {
     ch: string
-    constructor(ch: string) {
+    private constructor(ch: string) {
         if(ch.length != 1) {
             throw new Error(`CharNode.constructor ch is too long ${ch}`)
         }
@@ -33,7 +34,7 @@ export class CharNode extends TreeNode {
 
 export class PlusSignNode extends TreeNode {
     ch: string
-    constructor() {
+    private constructor() {
         super("plussign")
         this.ch = "+"
     }
@@ -43,7 +44,7 @@ export class PlusSignNode extends TreeNode {
 }
 export class MultSignNode extends TreeNode {
     ch: string
-    constructor() {
+    private constructor() {
         super("multsign")
         this.ch = "*"
     }
@@ -54,7 +55,7 @@ export class MultSignNode extends TreeNode {
 
 export class BracketNode extends TreeNode {
     child: TreeNode
-    constructor(c: TreeNode) {
+    private constructor(c: TreeNode) {
         super("bracket")
         this.child = c
     }
@@ -66,7 +67,7 @@ export class AddNode extends TreeNode {
     left:  TreeNode
     right: TreeNode
     op:    PlusSignNode
-    constructor(left: TreeNode, right: TreeNode) {
+    private constructor(left: TreeNode, right: TreeNode) {
         super("add")
         this.left = left
         this.right = right
@@ -80,7 +81,7 @@ export class MultNode extends TreeNode {
     left: TreeNode
     right: TreeNode
     op: MultSignNode
-    constructor(left: TreeNode, right: TreeNode) {
+    private constructor(left: TreeNode, right: TreeNode) {
         super("mult")
         this.left = left
         this.right = right

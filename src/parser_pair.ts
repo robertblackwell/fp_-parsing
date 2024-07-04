@@ -39,11 +39,11 @@ class PPairC<T> {
 export type PPair<T> = PPairC<T>
 
 export function make<T>(v: T, rem: string): PPair<T> {return PPairC.make(v, rem)}
-export function first<T>(tuple: PPair<T>): T {return tuple.value}
+// export function first<T>(tuple: PPair<T>): T {return tuple.value}
 export function get_value<T>(tuple: PPair<T>): T {return tuple.value}
-export function second<T>(tuple: PPair<T>): string {return tuple.remaining_input}
+// export function second<T>(tuple: PPair<T>): string {return tuple.remaining_input}
 export function get_remaining_input<T>(tuple: PPair<T>): string {return tuple.remaining_input}
 
 export function fmap<A,B>(f:(a:A) => B) {
-    return (x:PPair<A>) => make(f(first(x)), second(x) ) 
+    return (x:PPair<A>) => make(f(x.value), x.remaining_input ) 
 }

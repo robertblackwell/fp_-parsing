@@ -7,10 +7,10 @@ import * as PR from "./parser_result"
 export type Ast = Tree.TreeNode
 
 export function ast_value(r: ParserResultAst): Ast {
-    return PR.first(r)
+    return PR.value(r)
 } 
 export function ast_remain(r: ParserResultAst): string {
-    return PR.second(r)
+    return PR.remaining_input(r)
 } 
 
 export type ParserTupleAst = PT.PPair<Ast>

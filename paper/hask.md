@@ -3,24 +3,33 @@
 All the category theory concepts used in Haskell take place in the __Hask__ category where objects are Haskell types
 and arrows between two types are Haskel function between those 2 types.
 
-## Closed Categories
+We will use the notation `Hom(A, B)` to be the __set__ of all arrows between `A` and `B`.
 
-__Hask__ in what a category theorist would call a cartesian closed category. This means
+## Cartesian Closed Categories
 
--   the category has __products__
+__Hask__ in what a category theorist would call a __Cartesian Closed Category__. This means
+
+-   the category has a __products__ operation between object
     -   for every two objects `A` and `B` in __Hask__ there is another object called `A` x `B` which has certain universal proterties.
     -   the is a special object, the initial object, called `I` such that `I` x `A` <spam>&cong;</span> `A` x `I`  <spam>&cong;</span> `A`  
 
 - the category has internal `Hom`
 
-    -   for every two objects `A` and `B` there is an object called `[A, B]` such that
-
+    -   for every two objects `A` and `B` there is an object in the category called `[A, B]` such that
 
 - and the following special relationship between these two operations
 
     -   `[I, B]`  <spam>&cong;</span>  `B`
     -   `[A x B, C]`  <spam>&cong;</span> `[A, [B, C]]`
-    -   `Hom(A x B, C)`  <spam>&cong;</span> `Hom(A, [B, C])` ... the curry isomorphism
+    -   `Hom(A x B, C)`  <spam>&cong;</span> `Hom(A, [B, C])` ... the __Curry Isomorphism__.
+
+## Caveat - are types a single thing or a set of all the possible values a type can take ?
+
+For all of this to work one must __squint__ when looking at `Hask` by sometimes seeing a __type__ as a single thing and
+sometimes interpretting a type as the set of all possible values. Thus somethimes `[A, B]` is considered as 
+the same as `Hom(A, B)`. 
+
+This is unsatisfactory.
 
 ## Currying
 
@@ -28,11 +37,13 @@ Notice that the 3rd of the above relationships is the identity that permits curr
 
 ## Monoidal Category
 
-A monoidal category except that the `x` operator is replaced by a binary operator called <span>&otimes;</span> and does not have the universal properties of a product.
+A monoidal category is a category that has a binary operation between objects that is not necessarily a __product__. For such ccategories 
+the `x` operator is replaced by a binary operator called <span>&otimes;</span> and does not have the universal properties of a product.
 
 ## Adjunction
 
-The relationships above (curry isomorphism) says that the two functors  `_ x B : Hask -> Hask` and `[B, _] : Hask -> Hask` are __adjoint__ with `_ x B` being left adjoint to `[B, ]`
+The relationships above (curry isomorphism) says that the two functors  `_ x B : Hask -> Hask` and `[B, _] : Hask -> Hask` are __adjoint__ with `_ x B` being 
+left adjoint to `[B, ]`
 
 ## Unit and counit of the adjuction
 
@@ -59,7 +70,7 @@ Let F be a functor from __Hask__ to __Hask__. What is the relationship between:
 
 In general the answer is __ there is no relationship__. But there are two special cases.
 
-### Lax Monaoidal
+### Functor - Lax Monoidal
 
 The functor F is lax monoidal if 
     1. for all `A` and `B` there exists a function `nu(A,B) :F(A) x F(B) -> F(A x B)`
@@ -67,15 +78,14 @@ The functor F is lax monoidal if
 
 which are __natural__ in A, B , I and satisfying a bunch of coherence rules.
 
-
-### Lax Closed
+### Functor - Lax Closed
 
 The functor F is lax closed if
-    1. for all `A` and `B` there exists a function `zeta(A,B)ß: F([A, B]) -> [F(A), F(B)]` 
+    1. for all `A` and `B` there exists a function `zeta(A,B): F([A, B]) -> [F(A), F(B)]` 
     
 which is natural in `A` and `B` and satisfy some coherence conditions.
 
-### In the Hask category Lax monoidal and lax closed are equivalent
+### Functor - In the Hask category Lax monoidal and lax closed are equivalent
 
 See [https://ncatlab.org/nlab/show/closed+functor](https://ncatlab.org/nlab/show/closed+functor)
 
@@ -87,7 +97,7 @@ Consider `nu([A, B], A): F([A, B]) x F(A) -> F([A, B] x A)` and compose on the r
     F([A, B]) x F(A) -> F(B)
 ```
 
-Now take the curreied equivalent of this function to get a function `F([A, B]) -> [F(A), F(B)]` which is `zeta(A, B)`.
+Now take the curried equivalent of this function to get a function `F([A, B]) -> [F(A), F(B)]` which is `zeta(A, B)`.
 
 Now assume F is lax closed.
 
@@ -97,9 +107,8 @@ Now compose on the right with `zeta(B, [A, B])` to get a function `F(A) -> [F(B)
 
 Now apply reverse currying to get `F(A) x F(B) -> F(A x B)`
 
-### Lax monoidal = lax closed = applicative
+### Functor - Lax monoidal = lax closed = applicative
 
-<make some comment>
 
 ## Slogans
 
@@ -110,3 +119,7 @@ Let `op:: A x B -> C` be a binary operation.
 `liftA2(op)` = `F(op)`&#2218;`nu(A, B)` : F(A) x F(B) -> F(C)
 
 This can clearly be extended inductively to n-ary operations 
+
+### 2. Applicative Functors provide a lifting of curried function to curried functions
+
+Left as an exercise for the reader

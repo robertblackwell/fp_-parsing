@@ -2,7 +2,7 @@
 
 ## Arithmetic Expressions
 
-The mission of this project is to build programs that 
+The mission of this project is to build a programs that 
 -   parses arithmetic expressions into a data structure I will call an `Ast`, 
 -   evaluates such a data structure,
 -   and prints such a data structure.

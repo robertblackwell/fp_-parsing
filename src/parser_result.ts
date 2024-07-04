@@ -9,8 +9,8 @@ export type PResult<T> = Maybe.Maybe<PP.PPair<T>>
 */
 export function fmap<T, S>(f: (t:T) => S): (r: PResult<T>) => PResult<S> {
     function ftuple(pt: PP.PPair<T>): PP.PPair<S> {
-        const first = PP.first(pt)
-        const second =PP.second(pt)
+        const first = pt.value  //PP.first(pt)
+        const second = pt.remaining_input //PP.second(pt)
         const f_first = f(first)
         return PP.make<S>(f_first, second)
     }
@@ -31,15 +31,17 @@ export function make<T>(v: T, rem: string): PResult<T> {return Maybe.just(PP.mak
 export function make_empty<T>(): PResult<T> {return Maybe.nothing()}
 export function make_failed<T>(): PResult<T> {return Maybe.nothing()} 
 
-export function first<T>(pr: PResult<T>): T {
+function first<T>(pr: PResult<T>): T {
     if(pr == null) {
         throw new Error(`pr_first`)
     }
-    return PP.first(pr as PP.PPair<T>)
+    return (pr as PP.PPair<T>).value  //PP.first(pr as PP.PPair<T>)
 }
-export function second<T>(pr: PResult<T>): string {
+export const value = first
+function second<T>(pr: PResult<T>): string {
     if(pr == null) {
         throw new Error(`pr_first`)
     }
-    return PP.second(pr as PP.PPair<T>)
+    return (pr as PP.PPair<T>).remaining_input  //PP.second(pr as PP.PPair<T>)
 }
+export const remaining_input = second
