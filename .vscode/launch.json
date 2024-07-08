@@ -20,6 +20,23 @@
             "cwd": "${workspaceRoot}",
         },
         {
+            "name": "code2md",
+            "type": "node",
+            "request": "launch",
+            "args": [
+                "${workspaceFolder}/bin/code2md.ts",
+                "${workspaceFolder}/src/maybe_v1.ts",
+                "${workspaceFolder}/docs"
+            ],
+            "runtimeArgs": [
+                "--nolazy",
+                "-r",
+                "ts-node/register"
+            ],
+            "sourceMaps": true,
+            "cwd": "${workspaceRoot}",
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "index.js",

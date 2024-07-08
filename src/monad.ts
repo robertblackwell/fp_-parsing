@@ -1,25 +1,107 @@
-/**
- * A monad is:
- * -    a type constructor we will call `M`, that is a generic type with a single argument, 
- * -    together with a set of free functions (that is not methods of a class).
- *      They are:
- *          `fmap(f:(a: A) => B): (ma: M<A>) => M<B>`
- * 
- *          `eta(a: A): M<A>`
- *          `mu(mma: M<M<A>>): M<A>)`
- *          `kliesli((f:(a: A) => M<B>): (ma: M<A>) => M<B>`
- *          `bind(ma: M<A>, f:(a: A) -> M<B>): M<B>`
- *          `liftA2:(f:(a:A, b:B) => C): (ma:M<A>, mb: M<B>) => M<C>
- *          `app(f:(a:A) => B, ma: M<A>): M<B>
- *          
- *      -   not all of these functions are independent, in that some can
- *          be derived from the others.
- * 
- *      -   in this project we will require `fmap`, `eta` and `mu` to be provided
- *          for each instance of a monad and the others will be derived from those. 
- * 
- */
+//@file_start functor.md
+//@markdown_start
+/*
+# Functor
+## Informally
+In this section we are going to discuss the concept of a __Functor__.
 
+In Functional Programming Functors are `type constructors` which take a type (say) T and make it into a new type
+which is often represented by the notation `F<T>` or `F T`.
+
+So far this looks like a generic type of one variable. However there are additional requirements.
+
+In addition to the type constructor a Functor is required to have an associated  function called `fmap` with the following signature:
+
+```ts
+fmap: ((a: A) => B) => (a: F<A>)=>F<B>
+```
+In addition `fmap` must 
+
+-   take the identity function `identity: A => A` to the identity function `identity: F<A> => F<A>`
+
+-   preserve composition. So if `f: A=>B` and `g:B => C` then
+
+```ts
+    fmap(gof) = fmap(g)ofmap(f)
+```
+
+where `o` is the operation of function composition.
+
+Because a Functor takes a type as input and returns a type it is informally a type of function from `Types => Types`.
+A category Theorist would call it an __endo functor__ on the categoru __Hask__. 
+
+## Representation in Typescript
+
+It is difficult to represent a Functor in Typescript in a way where the language enforces all of the requireed element.
+
+Ideally we would do something like this:
+
+```ts
+abstract class Functor<T> {
+    abstract static fmap(f:(a:A) => B): (a: F<A>) => F<B>;
+}
+```
+
+but TS does not permit `abstract static methods`. Nor can we make this an interface as interfaces don't sufficietly support statis methods.
+
+So I am going to settle for something informal.
+
+## Functor definition
+
+A functor is a pair (F, fmap) where :
+
+-  a `F` is a generic class with one type parameter 
+-  and `fmap` is a static method of the class `F` where `F.map:((a:A) => B): (a: F<A>)=>F<B>`
+-   where F.fmap satisfier the identity and composition rules described above
+
+thus we often write the minimum requirement of a functor in pseudo TS as:
+
+```ts
+    class F<T> {
+        public static fmap<A,B>(f:(a:A)=>B):(a:F<A> => F<B>) {
+            ......
+        } 
+    }
+```
+
+Of course this is not complete class definition as it requires possible properties and definitely a constructor.
+
+For an example see the definition of `Maybe.fmap` in the file `Maybe_v1.ts`
+
+*/
+//@markdown_end
+//@code_start
+class Functor<T>{
+    fmap<A,B>(f:(a:A) => B): ((x:F<A>)=>F<B>) {}
+} 
+//@code_end
+//@file_end
+//@file_start monad.md
+//@markdown
+/*
+# Monad
+A monad is:
+-    a type constructor we will call `M`, that is a generic type with a single argument, 
+-    together with a set of free functions (that is not methods of a class).
+     They are:
+         `fmap(f:(a: A) => B): (ma: M<A>) => M<B>`
+
+         `eta(a: A): M<A>`
+         `mu(mma: M<M<A>>): M<A>)`
+         `kliesli((f:(a: A) => M<B>): (ma: M<A>) => M<B>`
+         `bind(ma: M<A>, f:(a: A) -> M<B>): M<B>`
+         `liftA2:(f:(a:A, b:B) => C): (ma:M<A>, mb: M<B>) => M<C>
+         `app(f:(a:A) => B, ma: M<A>): M<B>
+         
+     -   not all of these functions are independent, in that some can
+         be derived from the others.
+ 
+     -   in this project we will require `fmap`, `eta` and `mu` to be provided
+         for each instance of a monad and the others will be derived from those. 
+
+*/
+//@markdown_end
+//@code_start
 export  abstract class M<A> {
 
 }
@@ -134,3 +216,5 @@ abstract class MF<A> {
             return obj
         }
     }
+//@code_end
+//@file_end

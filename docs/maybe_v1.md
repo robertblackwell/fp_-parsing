@@ -1,6 +1,5 @@
-//@file_start maybe_v1.md
-//@markdown_start
-/** 
+<!-- file:docs/maybe_v1.md -->
+ 
 ## Maybe Monad - Version 1
 
 I am introducing this example of a Monad early in the exposition because it will be required
@@ -15,9 +14,8 @@ However I chose to define a type `Maybe<T>` more like the definition from Haskel
 
 For the moment I have ommitted many of the __monad__ characteristics. THat will be covered in a future section
 entitled __Maybe Monad V2__.
-*/
-//@markdown_end
-//@code_start
+ 
+```ts
 
 export class Maybe<T> {
     private value: T | null
@@ -31,15 +29,6 @@ export class Maybe<T> {
     public static nothing<T>(): Maybe<T> {
         return new Maybe<T>(null)
     }
-    public static fmap<A,B>(f:(a:A) => B): (x:Maybe<A>)=>Maybe<B> {
-        return function(x: Maybe<A>): Maybe<B> {
-            if(Maybe.isNothing(x)) {
-                return Maybe.nothing()
-            } else {
-                return Maybe.just(f(Maybe.getValue(x)))
-            }
-        }
-    }
     public static isNothing<T>(r: Maybe<T>): boolean {
         return (r.value === null)
     }
@@ -50,35 +39,9 @@ export class Maybe<T> {
         return r.value
     }
 }
-//@code_end
-//@ignore_start
-// class Maybe2<T> {
-//     value: T | null
-//     constructor() {
-//         this.value = null
-//     }
-//     static nothing<T>(): Maybe2<T> {
-//         return new Maybe2()
-//     }
-//     static just<T>(t: T): Maybe2<T> {
-//         let obj = new Maybe2<T>()
-//         obj.value = t
-//         return obj
-//     }
-//     static isNothing<T>(mb: Maybe2<T>): boolean {
-//         return (mb.value == null)
-//     }
-//     static getValue<T>(mb: Maybe2<T>): T {
-//         if(!mb.value) {
-//             throw new Error(`Maybe.getValue error is nothing `)
-//         } else {
-//             return mb.value
-//         }
-//     }
-// }
-//@ignore_end
-//@markdown_start
-/*
+```
+ 
+ 
 The benefit of this definition is that it more closely follows the Haskel notation, and hence is an aid to understanding.
 
 Note some of the characteristics of this definition.
@@ -89,6 +52,3 @@ constructors implemented as publis static functions.
 The type is opaque, the value property cannot be modified or queried except by the use of the give static function.
 
 Instances of `Maybe<T>` are immutable, doubly so no access to the `value` property and the instances are frozen.
-*/
-//@markdown_end
-//@file_end

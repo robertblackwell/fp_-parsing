@@ -1,28 +1,33 @@
+//@file_start maybe_v2.md
+//@ignore_start
 import * as PP from "./parser_pair"
 import * as PR from "./parser_result"
 import * as PT from "./parser_type"
 import * as Maybe from "./maybe"
+//@ignore_end
+//@markdown_start
+/*
+Haskel definition of a Monad
+class Monad m where
+  (>>=)  :: m a -> (  a -> m b) -> m b
+  (>>)   :: m a ->  m b         -> m b
+  return ::   a                 -> m a
 
-// Haskel definition of a Monad
-// class Monad m where
-//   (>>=)  :: m a -> (  a -> m b) -> m b
-//   (>>)   :: m a ->  m b         -> m b
-//   return ::   a                 -> m a
-
-// View a Monad as an Applicative
-// fmap fab ma  =  do { a <- ma ; return (fab a) }
-//             --  ma >>= (return . fab)
-// pure a       =  do { return a }
-//             --  return a
-// mfab <*> ma  =  do { fab <- mfab ; a <- ma ; return (fab a) }
-//             --  mfab >>= (\ fab -> ma >>= (return . fab)) 
-//             --  mfab `ap` ma
-
-
+View a Monad as an Applicative
+fmap fab ma  =  do { a <- ma ; return (fab a) }
+            --  ma >>= (return . fab)
+pure a       =  do { return a }
+            --  return a
+mfab <*> ma  =  do { fab <- mfab ; a <- ma ; return (fab a) }
+            --  mfab >>= (\ fab -> ma >>= (return . fab)) 
+            --  mfab `ap` ma
+*/
+//@markdown_end
+//@code_start
 function compose<X, Y>(f: (s:string) => X, g: (x:X) => Y): (s:string) => Y {
     return (s: string) => g(f(s))
 }
-
+//@code_end
 /**
  * Claim that the "type constructor" PT.ParserType<T> is an applicative functor.
  * 

@@ -1,12 +1,16 @@
-/**
- * Simple maybe monad
- */
-/**
- * Wraps a T value or is null - so we have Nullable<T>. 
- * We could then do the standard TS thiing and check for null before using a Maybe value.
- * However I wanted the Maybe Monad to be more overtly visible than that approach would have yielded.
- */
+//@file_start maybe_v2.md
+//@markdown_start
+/*
+# Maybe Monad - Version 2
 
+This version has been expanded to contain all the __Monad__ functions.
+
+Wraps a T value or is null - so we have Nullable<T>. 
+We could then do the standard TS thiing and check for null before using a Maybe value.
+However I wanted the Maybe Monad to be more overtly visible than that approach would have yielded.
+*/
+//@markdown_end
+//@code_start
 export class Maybe2<T> {
     value: T | null
     constructor() {
@@ -30,6 +34,15 @@ export class Maybe2<T> {
             return mb.value
         }
     }
+    public static fmap<A,B>(f:(a:A) => B): (x:Maybe2<A>)=>Maybe2<B> {
+        return function(x: Maybe2<A>): Maybe2<B> {
+            if(Maybe2.isNothing(x)) {
+                return Maybe2.nothing()
+            } else {
+                return Maybe2.just(f(Maybe2.getValue(x)))
+            }
+        }
+    }
     static pure<T>(v: T): Maybe2<T> {
         let obj = Maybe2.just(v) as Maybe2<T>
         return obj
@@ -47,8 +60,8 @@ export class Maybe2<T> {
         return Maybe2.getValue(Maybe2.getValue(mmt)) as unknown as Maybe2<T>
     }
 }
-
-
+//@code_end
+//@ignore_start
 
 export type Maybe<T> = T | null
 
@@ -185,3 +198,5 @@ function test_maybe() {
         }
     }
 }
+//@ignore_end
+//@file_end
