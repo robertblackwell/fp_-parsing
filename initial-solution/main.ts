@@ -1,6 +1,6 @@
 'use strict'
-import {MultNode, AddNode, BracketNode, NumberNode} from "./tree"
-import {node_tostring, evaluate_tree, treeAsString, treeAsNumber} from "./walker"
+import {MultNode, AddNode, BracketNode, NumberNode} from "../src/tree/tree"
+import {node_tostring, evaluate_tree, treeAsString, treeAsNumber} from "../src/tree/walker"
 import * as P from "./parser"
 
 function test_tree() {

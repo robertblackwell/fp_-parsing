@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Do notation - Functional Programming - A persoonal Exploration in TS</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Do notation";
+        var mkdocs_page_input_path = "do_notation.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Functional Programming - A persoonal Exploration in TS
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../01_introduction/">Introduction</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_maybe_monad/">The Maybe Monad</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_parsing_intro/">Parsing</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../03_building_parsers/">Combining Parsers</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../04_ast/">Ast</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Functional Programming - A persoonal Exploration in TS</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Do notation</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="10-do-notation-what-problem-does-it-solve">1.0 <code>do</code> notation - what problem does it solve</h2>
+<p>What problem does the Haskell <code>do</code> solve.</p>
+<p>Consider you have two functions <code>f :: X -&gt; M A</code> and <code>g :: Y -&gt; M B</code> 
+which do some calculation that prepares input for a final "bring it all together" calculation
+represented by a function <code>k :: (A, B) -&gt; M C</code>.</p>
+<p>As you can see all of these functions produce a <code>Monadic</code> result, maybe each calculation 
+required some <code>IO</code> and <code>M A</code> may have failed so <code>M A</code> may equal <code>IO Maybe A</code>. But for the moment
+lets assume that <code>M = Maybe</code> (no IO).</p>
+<p>How would we apply <code>k</code> to the outcomes of <code>f</code> and <code>g</code>.</p>
+<p>In a typical imperative language we would write something like this:</p>
+<pre><code class="language-typescript">function combine(ma: M A, mb: M B, k: (A, B) -&gt; M C): M C {
+
+    if(ma.isNothing() || mb.isNothing()) {
+        return Maybe.nothing()
+    }
+    const a = ma.get_value()
+    const b = mb.get_value()
+    return k(a, b)
+}
+</code></pre>
+<p>The problem with the above solution is that it is<code>Maybe</code> specific. Is there a way
+of doing this for a general <code>Monad</code>?</p>
+<p>The Haskell solution is</p>
+<pre><code class="language-haskell">combine :: (m a, m b, (a,b) -&gt; m c) -&gt; m c 
+combine ma mb k = ma &gt;&gt;= (\x -&gt; 
+                  mb &gt;&gt;= (\y -&gt; f x y))    
+
+</code></pre>
+<p>or using <code>do</code> notation</p>
+<pre><code class="language-haskell">combine :: (m a, m b, (a,b) -&gt; m c) -&gt; m c 
+combine ma mb k =  do {
+        x &lt;- ma;
+        y &lt;- mb;
+        k a b
+    }
+</code></pre>
+<p>For those like me that find the haskell hard to read the typescript version is</p>
+<pre><code class="language-typescript">
+function combine(ma: M&lt;A&gt;, mb: M&lt;B&gt;, k: (A, B) -&gt; M&lt;C&gt;): M&lt;C&gt; {
+
+    M.bind(ma, (a) =&gt; M.bind(mb, (b) =&gt; k(a,b)))
+
+}
+</code></pre>
+<p>The nested function definitions <code>(a) =&gt; M.bind(mb, (b) =&gt; k(a,b))</code> use scope to make the <code>a</code> and <code>b</code> available to the inner
+call to <code>k(a, b)</code>. </p>
+<p>Inline function definitions seem central to this construct.</p>
+<p>This is tested and demonstrated in file <code>tests/test_do.ts</code>.</p>
+<p>It should be noted that the above result can be rephrased as follows:</p>
+<h3 id="proposition-1">Proposition 1:</h3>
+<p>A function <code>k: (A, B) -&gt; M C</code> can be extended to a function <code>kprime: (M A, M B) -&gt; M C</code>.</p>
+<p>Proof:</p>
+<p>The calculation above is the proof.</p>
+<h2 id="a-more-categorical-approach">A more "categorical" approach</h2>
+<p>So the above calculations seem to work but for me they are a computer scientists solution not a category theorists solution.</p>
+<p>Is there a "higher level" way of achieving the same end that operates at the level of "arrows" rather than nitty-gritty calculations.</p>
+<p>The answer of course is <strong>YES</strong>. In fact a little more is possible.</p>
+<h3 id="proposition-2">Proposition 2:</h3>
+<p>If M is a monad and <code>p: A x B -&gt; M C</code> is a function then <code>p</code> can be extended to a function <code>M A x M B -&gt; M C</code></p>
+<p>An alternate proof:</p>
+<p>The following is a sequence of deductions/constructions. Each entry is derived from
+the preceeding entry with the justification being given in the second column.  </p>
+<table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Function</th>
+<th>Reason the function can be deduced from the previous function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.</td>
+<td><code>p: A x B -&gt; M C</code></td>
+<td>The given or starting function</td>
+</tr>
+<tr>
+<td>2.</td>
+<td><code>A -&gt; [B, M C]</code></td>
+<td>The closed category isomorphism or currying of  <code>p</code></td>
+</tr>
+<tr>
+<td>3.</td>
+<td><code>A -&gt; [M B, M C]</code></td>
+<td>By applying the Kliesli or Monad extension theorem on the right side</td>
+</tr>
+<tr>
+<td>4.</td>
+<td><code>A x M B -&gt; M C</code></td>
+<td>The closed category isomorphism or reverse currying</td>
+</tr>
+<tr>
+<td>5.</td>
+<td><code>M B x A -&gt; M C</code></td>
+<td>Commutativity (up to isomorphism) of cartesian product</td>
+</tr>
+<tr>
+<td>6.</td>
+<td><code>M B -&gt; [A, M C]</code></td>
+<td>By currying</td>
+</tr>
+<tr>
+<td>7.</td>
+<td><code>M B -&gt; [M A, M C]</code></td>
+<td>By apply the Kliesli or Monad extension theorem</td>
+</tr>
+<tr>
+<td>8.</td>
+<td><code>M B x M A -&gt; M C</code></td>
+<td>By un currying</td>
+</tr>
+<tr>
+<td>9.</td>
+<td><code>M A x M B -&gt; M C</code></td>
+<td>commutativity (up to isomorphism) of cartesian product</td>
+</tr>
+</tbody>
+</table>
+<p>Now lets take some of these functions and deduce the formular for them.</p>
+<p>Equation 2. <code>A -&gt; [B, M C]</code> is defined by <code>\a -&gt; (\b -&gt; p(a, b))</code></p>
+<p>Equation 3 <code>A -&gt; [M B, M C]</code> is defined by <code>\a -&gt; Kliesli(\b -&gt; p(a, b))</code>. Observe that <code>Kliesli(\b -&gt; p(a, b))</code> is a function <code>M B -&gt; M C</code></p>
+<p>Equation 4. <code>A x M B -&gt; M C</code> is defined by <code>\(a, mb) -&gt; Kliesli(\b -&gt; p(a, b))(mb)</code> or equivalently <code>\(a, mb) -&gt; mb &gt;&gt;= (\b -&gt; p(a, b))</code>  </p>
+<p>Equation 6. <code>M B -&gt; [A, M C]</code> is defined by <code>\mb -&gt; \a -&gt; Kliesli(\b -&gt; p(a, b))(mb)</code> or equivalently <code>\mb -&gt; (\a -&gt; mb &gt;&gt;= (\b -&gt; p(a, b)) )</code></p>
+<p>Equation 7. <code>M B -&gt; [M A, M C]</code> is defined by <code>\mb -&gt; Kliesli(\a -&gt; Kliesli(\b -&gt; p(a, b))(mb) )</code> observe that <code>Kliesli(\a -&gt; Kliesli(\b -&gt; p(a, b))(mb) )</code> is a function <code>M A -&gt; M C</code> </p>
+<p>Equation 8. <code>M B x M A -&gt; M C</code> is defined by <code>\(mb, ma) -&gt; Kliesli(\a -&gt; Kliesli(\b -&gt; p(a, b))(mb) )(ma)</code> or equivalently <code>\(mb, ma) -&gt; ma &gt;&gt;= (\a -&gt; mb &gt;&gt;= (\b -&gt; p(a, b)))</code></p>
+<p>Finally by reordering the argument <code>(mb, ma)</code> to <code>(ma, mb)</code> we get:</p>
+<p>Equation 9. <code>MA x M B -&gt; M C</code> defined as <code>\(ma, mb) -&gt; Kliesli(\a -&gt; Kliesli(\b -&gt; p(a, b))(mb) )(ma)</code> or equivalently <code>\(ma, mb) -&gt; ma &gt;&gt;= (\a -&gt; mb &gt;&gt;= (\b -&gt; p(a, b)))</code></p>
+<h3 id="definition-1">Definition 1</h3>
+<p>We call the function defined in Equation 9 above <code>Kliesli(p)</code></p>
+<p>In light of the above result we can now state that a Functor equipped with a Monadic structure is necessarily equipped with an Applicative structure.</p>
+<h3 id="proposition-3">Proposition 3:</h3>
+<p>If <code>p: A x B -&gt; C</code> is a function and <code>M</code> is a monad then <code>p</code> can be lifted to a function <code>liftA2(p) :M A x M B -&gt; M C</code> making M an Applicative Functor</p>
+<p>Proof:</p>
+<p>Consider the composition <code>eta . p : A x B ---&gt; C ---&gt; M C</code>. Now apply <code>Kliesli</code> to get <code>Kliesli(eta . p): M A x M B -&gt; M C</code>.  </p>
+<p><code>liftA2(p) = KLiesli(eta . p)</code></p>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

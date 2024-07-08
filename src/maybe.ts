@@ -7,7 +7,7 @@
  * However I wanted the Maybe Monad to be more overtly visible than that approach would have yielded.
  */
 
-class Maybe2<T> {
+export class Maybe2<T> {
     value: T | null
     constructor() {
         this.value = null
@@ -15,8 +15,8 @@ class Maybe2<T> {
     static nothing<T>(): Maybe2<T> {
         return new Maybe2()
     }
-    static just<T>(t: T) {
-        let obj = new Maybe2()
+    static just<T>(t: T): Maybe2<T> {
+        let obj = new Maybe2<T>()
         obj.value = t
         return obj
     }

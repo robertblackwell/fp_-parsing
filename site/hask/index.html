@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>The Hask Category - Functional Programming - A persoonal Exploration in TS</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "The Hask Category";
+        var mkdocs_page_input_path = "hask.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Functional Programming - A persoonal Exploration in TS
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../01_introduction/">Introduction</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_maybe_monad/">The Maybe Monad</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_parsing_intro/">Parsing</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../03_building_parsers/">Combining Parsers</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../04_ast/">Ast</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Functional Programming - A persoonal Exploration in TS</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">The Hask Category</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="the-hask-category">The Hask Category</h1>
+<p>All the category theory concepts used in Haskell take place in the <strong>Hask</strong> category where objects are Haskell types
+and arrows between two types are Haskel function between those 2 types.</p>
+<p>We will use the notation <code>Hom(A, B)</code> to be the <strong>set</strong> of all arrows between <code>A</code> and <code>B</code>.</p>
+<h2 id="cartesian-closed-categories">Cartesian Closed Categories</h2>
+<p><strong>Hask</strong> in what a category theorist would call a <strong>Cartesian Closed Category</strong>. This means</p>
+<ul>
+<li>
+<p>the category has a <strong>products</strong> operation between object</p>
+<ul>
+<li>for every two objects <code>A</code> and <code>B</code> in <strong>Hask</strong> there is another object called <code>A</code> x <code>B</code> which has certain universal proterties.</li>
+<li>the is a special object, the initial object, called <code>I</code> such that <code>I</code> x <code>A</code> <spam>&cong;</span> <code>A</code> x <code>I</code>  <spam>&cong;</span> <code>A</code>  </li>
+</ul>
+</li>
+<li>
+<p>the category has internal <code>Hom</code></p>
+<ul>
+<li>for every two objects <code>A</code> and <code>B</code> there is an object in the category called <code>[A, B]</code> such that</li>
+</ul>
+</li>
+<li>
+<p>and the following special relationship between these two operations</p>
+<ul>
+<li><code>[I, B]</code>  <spam>&cong;</span>  <code>B</code></li>
+<li><code>[A x B, C]</code>  <spam>&cong;</span> <code>[A, [B, C]]</code></li>
+<li><code>Hom(A x B, C)</code>  <spam>&cong;</span> <code>Hom(A, [B, C])</code> ... the <strong>Curry Isomorphism</strong>.</li>
+</ul>
+</li>
+</ul>
+<h2 id="caveat-are-types-a-single-thing-or-a-set-of-all-the-possible-values-a-type-can-take">Caveat - are types a single thing or a set of all the possible values a type can take ?</h2>
+<p>For all of this to work one must <strong>squint</strong> when looking at <code>Hask</code> by sometimes seeing a <strong>type</strong> as a single thing and
+sometimes interpretting a type as the set of all possible values. Thus somethimes <code>[A, B]</code> is considered as 
+the same as <code>Hom(A, B)</code>. </p>
+<p>This is unsatisfactory.</p>
+<h2 id="currying">Currying</h2>
+<p>Notice that the 3rd of the above relationships is the identity that permits currying of functions.</p>
+<h2 id="monoidal-category">Monoidal Category</h2>
+<p>A monoidal category is a category that has a binary operation between objects that is not necessarily a <strong>product</strong>. For such ccategories 
+the <code>x</code> operator is replaced by a binary operator called <span>&otimes;</span> and does not have the universal properties of a product.</p>
+<h2 id="adjunction">Adjunction</h2>
+<p>The relationships above (curry isomorphism) says that the two functors  <code>_ x B : Hask -&gt; Hask</code> and <code>[B, _] : Hask -&gt; Hask</code> are <strong>adjoint</strong> with <code>_ x B</code> being 
+left adjoint to <code>[B, ]</code></p>
+<h2 id="unit-and-counit-of-the-adjuction">Unit and counit of the adjuction</h2>
+<p>Take  <code>id: A x B -&gt; A x B</code> and apply the curry relationship to get <code>unit: A -&gt; [B, A x B]</code></p>
+<p>Similarly take <code>id: [A, B] -&gt; [A, B]</code> and apply reverse currying to get <code>counit: [A, B] x A -&gt; B</code></p>
+<p>The <code>unit</code> function  is defined as <code>unit(a): B -&gt; A x B</code> such that <code>unit(a)(b) = (a,b)</code></p>
+<p>The <code>counit</code> function is defined by <code>counit(f, a) = f(a)</code>. It could be called <code>eval</code></p>
+<p>The curry isomporphism can be defined in terms of the <code>unit</code> and <code>counit</code>.</p>
+<p>If <code>f: A x B -&gt; C</code> then its curried equivalent is the composition <code>unit: A -&gt; [B, A x B]</code> followed by <code>[B, f]: [B, A x B] -&gt; [B, C]</code>.</p>
+<p>Conversely <code>g: A -&gt; [B, C]</code> then its reverse curry equivalent is the composition <code>g x B: A x B -&gt; [[B, C] x B]</code> followed by <code>counit: [[B, C] x B] -&gt; C</code> </p>
+<h2 id="functors-between-monoidal-or-even-cartesian-closed-categories">Functors between Monoidal (Or even Cartesian) Closed Categories</h2>
+<p>Let F be a functor from <strong>Hask</strong> to <strong>Hask</strong>. What is the relationship between:</p>
+<ol>
+<li><code>F(A) x F(B)</code> and  <code>F(A x B)</code></li>
+<li><code>F([A, B])</code> and <code>[F(A), F(B)]</code></li>
+</ol>
+<p>In general the answer is __ there is no relationship__. But there are two special cases.</p>
+<h3 id="functor-lax-monoidal">Functor - Lax Monoidal</h3>
+<p>The functor F is lax monoidal if 
+    1. for all <code>A</code> and <code>B</code> there exists a function <code>nu(A,B) :F(A) x F(B) -&gt; F(A x B)</code>
+    2. for all <code>A</code> there exists a function <code>iotaA: I -&gt; F(I)</code></p>
+<p>which are <strong>natural</strong> in A, B , I and satisfying a bunch of coherence rules.</p>
+<h3 id="functor-lax-closed">Functor - Lax Closed</h3>
+<p>The functor F is lax closed if
+    1. for all <code>A</code> and <code>B</code> there exists a function <code>zeta(A,B): F([A, B]) -&gt; [F(A), F(B)]</code> </p>
+<p>which is natural in <code>A</code> and <code>B</code> and satisfy some coherence conditions.</p>
+<h3 id="functor-in-the-hask-category-lax-monoidal-and-lax-closed-are-equivalent">Functor - In the Hask category Lax monoidal and lax closed are equivalent</h3>
+<p>See <a href="https://ncatlab.org/nlab/show/closed+functor">https://ncatlab.org/nlab/show/closed+functor</a></p>
+<p>Assume F is lax monoidal.</p>
+<p>Consider <code>nu([A, B], A): F([A, B]) x F(A) -&gt; F([A, B] x A)</code> and compose on the right with <code>F(counit)</code> to get a function:</p>
+<pre><code>    F([A, B]) x F(A) -&gt; F(B)
+</code></pre>
+<p>Now take the curried equivalent of this function to get a function <code>F([A, B]) -&gt; [F(A), F(B)]</code> which is <code>zeta(A, B)</code>.</p>
+<p>Now assume F is lax closed.</p>
+<p>Apply F to the <code>unit</code> to get <code>F(unit): F(A) -&gt; F([B, A x B])</code></p>
+<p>Now compose on the right with <code>zeta(B, [A, B])</code> to get a function <code>F(A) -&gt; [F(B), F(A x B)]</code></p>
+<p>Now apply reverse currying to get <code>F(A) x F(B) -&gt; F(A x B)</code></p>
+<h3 id="functor-lax-monoidal-lax-closed-applicative">Functor - Lax monoidal = lax closed = applicative</h3>
+<h2 id="slogans">Slogans</h2>
+<h3 id="1-applicative-functors-lift-n-ary-operations">1. Applicative Functors lift n-ary operations</h3>
+<p>Let <code>op:: A x B -&gt; C</code> be a binary operation.</p>
+<p><code>liftA2(op)</code> = <code>F(op)</code>&#2218;<code>nu(A, B)</code> : F(A) x F(B) -&gt; F(C)</p>
+<p>This can clearly be extended inductively to n-ary operations </p>
+<h3 id="2-applicative-functors-provide-a-lifting-of-curried-function-to-curried-functions">2. Applicative Functors provide a lifting of curried function to curried functions</h3>
+<p>Left as an exercise for the reader</p>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

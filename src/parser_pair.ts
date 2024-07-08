@@ -1,30 +1,30 @@
-/**
- * I started with this definition of PPair<T>
- * 
- *      export type PPair<T> = [T, string] 
- *
- * but soon realized it is not immutable and not opaque. 
- * What I want is an immutable pair where there is no direct access to the
- * members. Also I wanted the "parser failed" to be implemented as a Maybe Monad
- * not by some special value within the PPair<> type
- * 
- * So the following class based solution seems better
+/**M
+
+I started with this definition of PPair<T>
+ 
+    export type PPair<T> = [T, string] 
+but soon realized it is not immutable and not opaque. 
+What I want is an immutable pair where there is no direct access to the
+members. Also I wanted the "parser failed" to be implemented as a Maybe Monad
+not by some special value within the PPair<> type
+ 
+So the following class based solution seems better
 */
 
-class PPairC<T> {
+export class PPairC<T, S> {
     private _value: T
-    private _remaining_input: string
-    private constructor(v: T, input: string) {
+    private _remaining_input: S
+    private constructor(v: T, input: S) {
         this._value = v
         this._remaining_input = input
     }
-    public static make<T>(v: T, input: string) {
+    public static make<T, S>(v: T, input: S) {
         return new PPairC(v, input)
     }
-    public get value() {
+    public get value(): T {
         return this._value
     }
-    public get remaining_input() {
+    public get remaining_input(): S {
         return this._remaining_input
     }
     // public static first<T>(tuple: PPair<T>): T {return tuple._value}
@@ -36,7 +36,7 @@ class PPairC<T> {
     // }
 }
 
-export type PPair<T> = PPairC<T>
+export type PPair<T> = PPairC<T, string>
 
 export function make<T>(v: T, rem: string): PPair<T> {return PPairC.make(v, rem)}
 // export function first<T>(tuple: PPair<T>): T {return tuple.value}

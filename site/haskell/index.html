@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Haskell - Functional Programming - A persoonal Exploration in TS</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Haskell";
+        var mkdocs_page_input_path = "haskell.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Functional Programming - A persoonal Exploration in TS
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../01_introduction/">Introduction</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_maybe_monad/">The Maybe Monad</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_parsing_intro/">Parsing</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../03_building_parsers/">Combining Parsers</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../04_ast/">Ast</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Functional Programming - A persoonal Exploration in TS</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Haskell</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="monads-and-applicatives">Monads and Applicatives</h2>
+<h3 id="functor">Functor</h3>
+<pre><code class="language-haskell">class Functor f where
+    fmap :: (a -&gt; b) -&gt; f a -&gt; f b
+    (&lt;$) :: a -&gt; f b -&gt; f a
+</code></pre>
+<h3 id="applicative">Applicative</h3>
+<pre><code class="language-haskell">class Functor f =&gt; Applicative f where
+    pure  :: a -&gt; m a
+    (&lt;*&gt;) :: m (a-&gt;b) -&gt; m a -&gt; mb
+    or
+    liftA2 :: (a -&gt; b -&gt; c)  -&gt;  (m a -&gt; m b -&gt; m c)
+
+    (&lt;*&gt;) and liftA2 are related by the following equations:
+
+    (&lt;*&gt;) = liftA2 id
+    liftA2 f x y = f &lt;$&gt; x &lt;*&gt; y
+
+    see Note below by RB
+
+    where &lt;$&gt; is apply fmap and then evaluate
+    (&lt;$&gt;)   :: (a -&gt; b) -&gt; m a -&gt; m b 
+    \fab -&gt; (\ma -&gt; fmap(fab)(ma)) 
+
+</code></pre>
+<h3 id="note-1-lifta2-from">Note 1 - liftA2 from &lt;*&gt;</h3>
+<p>Regarding 
+ ```haskell
+ liftA2 f x y = f &lt;$&gt; x &lt;*&gt; y</p>
+<p>liftA2 :: (a -&gt; (b -&gt; c) -&gt; (m a -&gt; (m b -&gt; m c))</p>
+<p>fmap :: (a -&gt; (b -&gt; c)) -&gt; (m a -&gt; m (b -&gt; c))</p>
+<p>If f :: a -&gt; (b -&gt; c) then fmap f :: m a -&gt; m (b -&gt; c) and </p>
+<pre><code>`fmap f ma` is of type `m (b -&gt; c)` and hence is a suitable first argument for `&lt;*&gt;`
+select a second argument `fmbc` of type `m (b -&gt; c)`
+
+then
+```haskell 
+    fmap f ma &lt;*&gt; fmbc is of type (m a -&gt; m b)
+</code></pre>
+<p>putting this all together</p>
+<p>liftA2 f ma fmbc = fmap f ma &lt;*&gt; fmbc </p>
+<pre><code>### NOTE 2 - &lt;*&gt; from liftA2
+```haskell
+(&lt;*&gt;) = liftA2 id
+
+liftA2 :: (a -&gt; (b -&gt; c)) -&gt; (f a -&gt; (f b -&gt; f c))
+
+lets replace a with (b -&gt; c)
+
+liftA2 :: ((b -&gt; c) -&gt; (b -&gt; c)) -&gt; (f (b -&gt; c) -&gt; (f b -&gt; f c))
+
+now evaluate liftA2 on the 
+
+identity :: (b -&gt; c) -&gt; (b -&gt; c)
+
+liftA2 identity :: f (b -&gt; c) -&gt; (f b -&gt; f c) as required
+</code></pre>
+<h3 id="haskel-definition-of-a-monad">Haskel definition of a Monad</h3>
+<pre><code class="language-haskell">class Monad m where
+   (&gt;&gt;=)  :: m a -&gt; (  a -&gt; m b) -&gt; m b
+   (&gt;&gt;)   :: m a -&gt;  m b         -&gt; m b
+   return ::   a                 -&gt; m a
+</code></pre>
+<h3 id="view-a-monad-as-an-applicative">View a Monad as an Applicative</h3>
+<pre><code class="language-haskell">fmap fab ma  =  do { a &lt;- ma ; return (fab a) }
+            --  ma &gt;&gt;= (return . fab)
+pure a       =  do { return a }
+            --  return a
+mfab &lt;*&gt; ma  =  do { fab &lt;- mfab ; a &lt;- ma ; return (fab a) }
+            --  mfab &gt;&gt;= (\ fab -&gt; ma &gt;&gt;= (return . fab)) 
+            --  mfab `ap` ma
+</code></pre>
+<h3 id="analysis-of-applicative-definitions">Analysis of applicative definitions</h3>
+<p>Let <code>fab</code> be a function of type <code>a -&gt; b</code>.</p>
+<p>The expression <code>return . fab</code> is the composition <code>fab</code> followed by <code>return</code> as in</p>
+<pre><code class="language-haskell">    a -&gt; b -&gt; m b
+</code></pre>
+<p>Let <code>ma</code> be a value of type <code>m a</code> then we can form the value <code>ma &gt;&gt;= return .fab</code> which is 
+a value of type <code>m b</code>. Call that value <code>mb</code> and note it depends on <code>fab</code> and <code>ma</code>.</p>
+<p>The function <code>\fab -&gt; ma &gt;&gt;= (return . fab)</code> is of type <code>(a -&gt; b) -&gt; m b</code>. </p>
+<p>For convenience call this function <code>g :: (a -&gt; b) -&gt; m b</code>. </p>
+<p>We take out the dependency of <code>ma</code> we could denote this as <code>h: m a -&gt; ((a -&gt; b) -&gt; m b)</code>
+so that <code>g</code> is simple <code>h</code> evaluated at <code>ma</code>.</p>
+<p>For any value <code>mfab</code> of type <code>m (a -&gt; b)</code> we can form the value <code>mfab &gt;&gt;= h(ma)</code> which is
+of type <code>m b</code>.  </p>
+<p>The expression <code>mfab &gt;&gt;= h(ma)</code> is the definition of <code>mfab &lt;*&gt; ma</code></p>
+<h2 id="kliesli-extension">Kliesli extension</h2>
+<p>The Kliesli condition is a characteristic of a monad that fully defines the monad.</p>
+<p>It states that for every </p>
+<pre><code class="language-haskell">f :: a -&gt; m b 
+</code></pre>
+<p>there exists a unique</p>
+<pre><code class="language-haskell">Kliesli(f) :: m a -&gt; m b
+</code></pre>
+<p>such that</p>
+<pre><code class="language-haskell">f = (Kliesli(f) . return) :: a -&gt; m am -&gt; m b
+</code></pre>
+<p>Given the Monad definition the Kliesli extension is defined as:</p>
+<pre><code class="language-haskell">KLiesli(f) = mu . fmap(f) :: m a -&gt; m m b -&gt; m b
+</code></pre>
+<p>or for <code>f::a -&gt; m b</code> and <code>ma</code> in <code>m a</code> </p>
+<pre><code class="language-haskell">Kliesli(f)(ma) = f &gt;&gt;= ma
+</code></pre>
+<h2 id="all-function-m-a-m-b-are-kliesli-extensions">All function m a -&gt; m b are KLiesli extensions</h2>
+<p>Consider a map <code>f :: m a -&gt; m b</code> some simple diagram chasing will demonstrate that
+for all <code>ma :: (m a)</code> <code>kliesli(f . pure)(ma) = (\a -&gt; kliesli(f . pure)(ma) = f(ma)</code>
+which is just another way of saying <code>kliesli(f . pure) = f</code>.</p>
+<p>That is the function <code>kliesli :: (a -&gt; m b) -&gt; (ma -&gt; mb)</code> and <code>(\f -&gt; f . pure) :: (m a -&gt; m b) -&gt; (a -&gt; m b)</code>
+constitute an isomorphism.</p>
+<h2 id="do-notation"><code>do</code> notation</h2>
+<p>What problem does the haskell <code>do</code> solve.</p>
+<p>Consider you have two functions <code>f :: X -&gt; M A</code> and <code>g :: Y -&gt; M B</code> which do some
+caclulation that prepare input for a final "bring it all together" calculation
+represented by a function <code>k :: (A, B) -&gt; M C</code>.</p>
+<p>As you can see all of these functions produce a <code>Monadic</code> result, maybe each calculation 
+required some <code>IO</code> and ma have failed so <code>M A</code> ma equal <code>IO Maybe A</code>. But for the moment
+lets assume that <code>M = Maybe</code> (no IO).</p>
+<p>How would we apply <code>k</code> to the outcomes of <code>f</code> and <code>g</code>.</p>
+<p>In a typical imperative language we would write something like this:</p>
+<pre><code class="language-typescript">function combine(ma: M A, mb: M B, k: (A, B) -&gt; M C)
+
+    if(ma.isNothing() || mb.isNothing()) {
+        return Maybe.nothing()
+    }
+    const a = ma.get_value()
+    const b = mb.get_value()
+    return k(a, b)
+}
+</code></pre>
+<p>The problem with the above solution is that it is<code>Maybe</code> specific. Is there a way
+of doing this for a general <code>Monad</code>?</p>
+<p>The haskell solution is</p>
+<pre><code class="language-haskell">combine :: (m a, m b, (a,b) -&gt; m c) -&gt; m c 
+combine ma mb k = ma &gt;&gt;= (\x -&gt; 
+                  mb &gt;&gt;= (\y -&gt; f x y))    
+
+</code></pre>
+<p>or using <code>do</code> notation</p>
+<pre><code class="language-haskell">combine :: (m a, m b, (a,b) -&gt; m c) -&gt; m c 
+combine ma mb k =  do {
+        x &lt;- ma;
+        y &lt;- mb;
+        k a b
+    }
+</code></pre>
+<pre><code class="language-typescript">
+Translating this into a hypothetical monad `M` yields (ignoring generic parameters)
+
+function combine(ma: M&lt;A&gt;, mb: M&lt;B&gt;, k: (A, B) -&gt; M&lt;C&gt;)
+
+    M.bind(ma, (a) =&gt; M.bind(mb, (b) =&gt; k(a,b)))
+
+}
+</code></pre>
+<p>This is tested in parser_applicative.ts</p>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

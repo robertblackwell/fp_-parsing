@@ -1,5 +1,5 @@
-import * as Tree from "./tree"
-import {treeAsNumber, treeAsString} from "./walker"
+import * as Tree from "../src/tree/tree"
+import {treeAsNumber, treeAsString} from "../src/tree/walker"
 type Ast = Tree.TreeNode | null
 
 type ParserResultAst = {ast: Ast, rem: string}
@@ -268,56 +268,63 @@ function sequence(ps: Array<Parser>, sinput: string, combine:(rs:Array<ParserRes
 /******************************************************************************/
 // Tests 
 /*******************************************************************************/
-
-export function test_parser() {
-    test_sequence()
-    test_add()
-    test_whitespace()
-    test_anumber() 
-}
-
-function test_sequence() {
-    const r1 = factor_and_term_1("2 + 3")
-    const r2 = factor_and_term_2("2 + 3")
-    const r3 = factor_and_term_1("2 * 3")
-    const r4 = factor_and_term_2("2 * 3")
-
-    const x1 = term_and_expression_1(" 2 + 3")
-    const x2 = term_and_expression_2(" 2 + 3")
-
-}
-function test_whitespace() {
-    let ss = " 1234"
-    const ss2 = removeLeadingWhitespace(ss)
-    const r1 = removeLeadingWhitespace("")
-    const r2 = removeLeadingWhitespace("  ff")
-    const r3 = removeLeadingWhitespace("hh")
-}
-function test_anumber() {
-    const r1 = anumber("")
-    const r2 = anumber("aaa")
-    const r3 = anumber("1")
-    const r4 = anumber("123")
-    const r5 = anumber("123 ")
-    const r6 = anumber("123X ")
-    const r7 = anumber("  123X ")
-}
-function test_add() {
-    function test_one(expression_str: string)
-    {
-        console.log(`testing string ${expression_str}`)
-        const r1 = expression(expression_str)
-        const s1 = treeAsString(r1.ast as Tree.TreeNode)
-        const v1 = treeAsNumber(r1.ast as Tree.TreeNode)
-        console.log(`input ${expression_str} result ${s1} value: ${v1} \n`)
+    // this is the main module
+  
+    function test_parser() {
+        test_sequence()
+        test_add()
+        test_whitespace()
+        test_anumber() 
     }
-    test_one("1 + 2")
-    test_one("2 * 3")
-    test_one(" 1 + 2")
-    test_one(" 2 * 3")
-    test_one("2*(3 + 4)")
-    test_one("2*(3 + 4) + 3 + 4* 5")
-    test_one(" 2*(3+4) + 3+4* 5")
-    test_one(" 2*(3+4)+ 3+4* 5")
+
+    function test_sequence() {
+        const r1 = factor_and_term_1("2 + 3")
+        const r2 = factor_and_term_2("2 + 3")
+        const r3 = factor_and_term_1("2 * 3")
+        const r4 = factor_and_term_2("2 * 3")
+
+        const x1 = term_and_expression_1(" 2 + 3")
+        const x2 = term_and_expression_2(" 2 + 3")
+
+    }
+    function test_whitespace() {
+        let ss = " 1234"
+        const ss2 = removeLeadingWhitespace(ss)
+        const r1 = removeLeadingWhitespace("")
+        const r2 = removeLeadingWhitespace("  ff")
+        const r3 = removeLeadingWhitespace("hh")
+    }
+    function test_anumber() {
+        const r1 = anumber("")
+        const r2 = anumber("aaa")
+        const r3 = anumber("1")
+        const r4 = anumber("123")
+        const r5 = anumber("123 ")
+        const r6 = anumber("123X ")
+        const r7 = anumber("  123X ")
+    }
+    function test_expr() {
+        function test_one(expression_str: string)
+        {
+            console.log(`testing string ${expression_str}`)
+            const r1 = expression(expression_str)
+            const s1 = treeAsString(r1.ast as Tree.TreeNode)
+            const v1 = treeAsNumber(r1.ast as Tree.TreeNode)
+            console.log(`input ${expression_str} result ${s1} value: ${v1} \n`)
+        }
+        test_one("1 + 2")
+        test_one("2 * 3")
+        test_one(" 1 + 2")
+        test_one(" 2 * 3")
+        test_one("2*(3 + 4)")
+        test_one("2*(3 + 4) + 3 + 4* 5")
+        test_one(" 2*(3+4) + 3+4* 5")
+        test_one(" 2*(3+4)+ 3+4* 5")
+    }
+if (typeof module !== 'undefined' && !module.parent) {
+    test_parser()
+    test_sequence()
+    test_whitespace()
+    test_anumber()
+    test_expr()
 }
-// test_parser()

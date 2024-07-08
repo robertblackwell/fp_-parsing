@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Introduction - Functional Programming - A persoonal Exploration in TS</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Introduction";
+        var mkdocs_page_input_path = "01_introduction.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Functional Programming - A persoonal Exploration in TS
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Introduction</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#goal">Goal</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#motivation">Motivation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#notation-comparison">Notation Comparison</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#an-exposition-as-well-as-a-parser">An exposition as well as a parser</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#notation-for-this-document">Notation for this document</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#two-code-solutions">Two code solutions</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#anatomy-of-the-solutions">Anatomy of the solutions</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_maybe_monad/">The Maybe Monad</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_parsing_intro/">Parsing</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../03_building_parsers/">Combining Parsers</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../04_ast/">Ast</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Functional Programming - A persoonal Exploration in TS</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Introduction</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <!-- # Parsing, Functional Programming and Categorical Stuff In Typescript -->
+
+<h1 id="introduction">Introduction</h1>
+<h2 id="goal">Goal</h2>
+<p>This project is a personal learning exercise in which my goal is to develop a parser for arithmetic expressions
+using the Functional Programming/Category Theoretic machinery of Functors, Applicatives, and Monads.</p>
+<h2 id="motivation">Motivation</h2>
+<p>I have been dabbling with functional programming in Haskell and Ocaml for sometime but have found
+it difficult to get my head around. </p>
+<p>This is particular gauling because as well as a programmer I am (or was) a Category Theorist,
+and in my Doctoral Dissertation I proved some Theorems about Monads (as least Monads in a 2-category
+that in those days were called Doctrines). So I am very familiar with the Category Theory, but have
+still found Haskell's interpretation of those concepts difficult to absorb.</p>
+<p>So this project is a concerted effort to learn or at least get over the hump.</p>
+<p>I have chosen to implement this project in Typescript. </p>
+<p>It is a language I know reasonably well,
+has an adequate type system (for most things but as we will see not for this project)
+and it is a traditional enough imperative language that any programmer should be able to follow
+along as I implement the various concepts. </p>
+<h2 id="notation-comparison">Notation Comparison</h2>
+<p>I believe the notation used in Haskell, Ocaml and other ML related languages get in the way
+of the Category Theorist in me grasping what is going on. Here is a brief discussion of the differences.</p>
+<p>FP/Haskell operates in the <strong>Hask</strong> category where objects are <strong>types</strong> (as defined by the languages type rules) and arrows are functions between types. </p>
+<p>In CT (an abbreviation for the term Category Theory) objects are upper case whereas in Haskell they are lower eg <code>A</code> vs <code>a</code>. </p>
+<p>In CT the notation <code>A -&gt; B</code> represents a particular arrow/function between two objects. However Haskell has no equivalent diagramatic notation for a single arrow.</p>
+<p>The Haskell notation <code>a -&gt; b</code> is a type, specifically the type of all arrows from <code>a</code> to <code>b</code>, and is another object is the Hask category.</p>
+<p>The equivalent in CT is <code>B<sup>A</sup></code> or sometimes <code>[A, B]</code>, or sometimes <code>A =&gt; B</code> and is an <strong>object in the Hask category</strong>. This is what makes <strong>Hask</strong>
+a <strong>closed category</strong>.  See more below.</p>
+<p>So if <code>M</code> (or <code>m</code> in Haskell) is a functor in CT <code>M(A-&gt;B)</code> is the functor applied to an arrow <code>f:A-&gt;B</code>. In Haskell this would be <code>fmap(f)</code>.</p>
+<p>On the otehrhand the equivalent Haskell notation <code>m(a-&gt; b)</code> is the functor applied to the object <code>a-&gt;b</code>. What a CT'ist would call <code>M([A,B])</code>.</p>
+<p>This is difference in the meaning of <code>m(a-&gt;b)</code> has definitely caused me grief and substantially slowed my understanding.</p>
+<p>CT represents the <strong>set</strong> of all arrows from <code>A</code> to <code>B</code> by <code>Hom(A, B)</code>. There is no equivalent in Haskell other than to say
+that <code>ab is a value of type (a -&gt; b)</code>.</p>
+<p>Finally consider pairs. If <code>A/a</code> and <code>B/b</code> are objects in (CT/Haskell) respectively the type of all pairs is called </p>
+<ul>
+<li><code>A x B</code> or <code>A<span>&otimes;</span>B</code> in Category Theory, and </li>
+<li><code>(a, b)</code> in Haskell.</li>
+</ul>
+<p>Together <code>AxB</code> and <code>[A, B]</code> make Hask a catersian/monoidal closed category, which is the equiavalent of <strong>currying</strong>.</p>
+<h2 id="an-exposition-as-well-as-a-parser">An exposition as well as a parser</h2>
+<p>In addition to providing typescript code that implements an Applicative and/or Monadic parser I hope to explain and document for myself
+the various relationships between Applicatives and Monads and their various formulations. I apologize in advance because this additional goal
+will force me at times to dive into the category theory and to use more CT like notation.  Hence the next heading is intended to provide a bit of
+a reference if things get confusing.</p>
+<h2 id="notation-for-this-document">Notation for this document</h2>
+<ul>
+<li>Objects are uppercase. This is consistent with Typescript general usage.</li>
+<li><code>A -&gt; B</code> means a specific arrow from <code>A</code> to <code>B</code>. </li>
+<li><code>A =&gt; B</code> is the type of arrows from <code>A</code> to <code>B</code>. Typescript will often insist that I write is <code>(a:A)=&gt;B</code>. When a discussion is mainly Category Theoretic I might use <code>[A, B]</code> for <code>A=&gt;B</code>.</li>
+<li>Functors, Applicatives, Monads are always represented by uppercase letters or a name starting with an uppercase letter, such as <code>Maybe</code>.</li>
+<li>Functor application will uses angle brackets <code>F&lt;A&gt;</code> (or a Haskell like convention of <code>F A</code>) is the functor <code>F</code> applied to the object <code>A</code>. This is a Typescript requirement.
+We might occasionally slip and write <code>F&lt;A-&gt;B&gt;</code> when we mean <code>fmap&lt;A-&gt;B&gt;</code>.</li>
+<li>We will generally write <code>A x B</code> as the type of pairs of <code>[A, B]</code> except when Typescript insists on using the second notation.</li>
+<li>A function that takes <code>n</code> arguments is not the same as a function that takes a single <code>n-tuple</code>. Nor is it the same as the function 
+resulting from full or partial <code>currying</code>. These are <strong>equivalent</strong> (meaning there is an isomorphism that maps one to the other 
+and back again) but not the same. Typescript also insists on this differentiation. </li>
+</ul>
+<h2 id="two-code-solutions">Two code solutions</h2>
+<p>I started this project by building a parser for arithmetic expressions using what I thought of as a FP approach
+but without using any of the machinery of Functors, Applicatives, Monads. At least not explicitly.</p>
+<p>I have kept that solution for the purposes of illustration and comparison in the sub directory <code>initial-solution</code>. To run this solution
+on some test cases simply enter <code>ts-node initial-solution/main.ts</code></p>
+<p>My final solution using the power of Functors, Applicatives and Monads is in the <code>src</code> sub directory. The <code>tests</code> directory
+runs a series of unit tests of the pieces and final solution.</p>
+<h2 id="anatomy-of-the-solutions">Anatomy of the solutions</h2>
+<p>Both the code solutions have broadly the same structure. </p>
+<ul>
+<li>
+<p>A parsing function takes in a character string and produces either some indication of failure or a data structure called an Abstract Syntax Tree an <code>Ast</code>. This function is in the file <code>initial-soluton/parser.ts</code> for the initial or naive solution and the file <code>src/parser.ts</code> for the Categorical solution.</p>
+</li>
+<li>
+<p>There are type definitions and constructor functions for the <code>Ast</code> in the files <code>src/tree/tree.ts</code> and <code>src/tree/tree.ts</code> and these are common to both solutions.</p>
+</li>
+<li>The files <code>stc/tree/walker.ts</code> contains functions that traverse an <code>Ast</code> and either evaluation the arithmetic expression or construct a canonical string representation of the <code>Ast</code>. </li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../02_maybe_monad/" class="btn btn-neutral float-right" title="The Maybe Monad">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+      <span><a href="../02_maybe_monad/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

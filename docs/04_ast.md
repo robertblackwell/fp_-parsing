@@ -1,63 +1,5 @@
-# Parsing
 
-## Arithmetic Expressions
-
-The mission of this project is to build a programs that 
--   parses arithmetic expressions into a data structure I will call an `Ast`, 
--   evaluates such a data structure,
--   and prints such a data structure.
-
-Here is a `BNF` specification of arithmetic expressions:
-
-```
-    expression  ::= term "+" expression | term
-    term        ::= factor "*" term | factor
-    factor      ::= number | "(" expression ")"
-    number      ::= digit , number | digit  
-    digit       ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
-```
-
-## What is a parser ?
-
-```
-    A parser for things
- is a functions from strings
-     to lists of pairs
-   of things and strings
-```
-
-Putting this little rhyme into a definition yields:
-
-```ts
-
-type Parser<T> = (s: string) => Array<[T, string]>
-
-```
-
-While this definition is simple I have decided, after much experimentation, that I dont like it for "real" programs. My reasons:
-
-1.  returning an empty array to signal parsing failed seems like a poor approach for a Functional Programming exercise. Why not use the `Maybe Monad`.
-2.  I found no need for a parser to return multiple tuples in any of my experiments in this project.
-3.  accessing the elements of a tupe using `tup[0]` and `tup[1]` seems error prone and difficult to change (many edit sites)
-
-Instead I decide to use the following (style) of definition.
-
-```ts
-type PPairClass<T> = ....
-type Parser<T> = (s: string) => Maybe<PPairClass<T>>)
-```
-where `PPairClass` is a "pair like" immutable structure that satisfies the following interface. Immutable because the properties `value` and `remaining_input`
-are read only.
-
-```ts
-interface PPairClass<T> {
-    static make<T>(v: T, input: string): PPairClass<T>;
-    value: T
-    remaining_input: string
-}
-```
-
-## Abstract Syntax Tree
+# Abstract Syntax Tree
 
 Most of the parser we deal with will (on success) produce part of a structure called an `Abstract Syntax Tree`. This will be a binary
 tree that represents the portion of the expression that has just been parsed.
@@ -93,6 +35,8 @@ Each concrete class has a static method `make` that creates an instance of the c
     NumberNode.make(n: number)
 ```
 
+each of these `make` functions return a `frozen` object to ensure immutability.
+
 When manipulating TreeNodes one often needs to know the concrete type of a `TreeNode`. To facilitate this
 there are a set of free functions with names like `isMultNode(node: TreeNode): boolean`
 which can be used in an if-ifelse-else chain. Once having determined the concrete type
@@ -122,7 +66,7 @@ function parseAnyChar<string>(sinput: string): Maybe<PPairClass<string>> {
         return Maybe.nothing()
     const value = s.substring(0,1)
     const remainder = s.slice(1)
-    return Maybe.just(PPairClass.make(value, remaiinder))
+    return Maybe.just(PPairClass.make(value, remainder))
 }
 /**
  * Parse a digit without consuming leading white space
@@ -134,7 +78,7 @@ function parseSingleDigit(sinput string): Maybe<PPairClass<string>> {
     }
     const value = s.substring(0,1)
     const remainder = s.slice(1)
-    return Maybe.just(PPairClass.make(value, remaiinder))
+    return Maybe.just(PPairClass.make(value, remainder))
 }
 /**
  * Return a parser that parses the next single character in the input if it satisfies 
@@ -155,8 +99,8 @@ function createPredicateParser(predicate (ch: string) => boolean): Parser<string
  * Take a parser for a single character meeting some criteria and return
  * a parser that detects greater than zero consecutive instances of such characters 
 */
-function createOneOrMoreParser(singleChParser: Parser<string>): Parser<string> {
-    function manyTimes(sinput: string) => {
+function create_OneOrMoreParser(singleChParser: Parser<string>): Parser<string> {
+    function functionManyTimes(sinput: string) => {
         let s = sinput.slice(0)
         const r = singleChParser(s)
         let parse_result = ""
@@ -164,41 +108,44 @@ function createOneOrMoreParser(singleChParser: Parser<string>): Parser<string> {
             return Maybe.nothing()
         }
         const pair = Maybe.get_value(r)
-        num = pair.value
+        const first_ok_char_as_str = pair.value
         const remain = pair.remaining_input
         const r2 = manyTimes(remain)
-        if(!Maybe.isNothing(r2)) {
-            const pair2 = Maybe.get_value(r2)
-            parse_result = parse_result + pair2.value
-            Maybe.just(PPairClass.make(parse_result, pair2.remaining_input)) 
+        if(Maybe.isNothing(r2)) {
+            return Maybe.nothing()
+        }
+        const result_pair = Maybe.get_value(r2)
+        const subsequent_ok_chars_as_string = result_pair.value
+        const parse_result_string = first_digit_as_string  + subsequent_digits_as_string
+        return Maybe.just(PPairClass.make(parse_result, pair2.remaining_input)) 
     }
-    return manyTimes
+    return functionManyTimes
 }
 function parseNumber(sinput string): Maybe<PPairClass<number>> {
     const digitParser = createPredicateParser((ss: string) => (ss.substring(0, 1).match(/[0-9]/g)))
-    const numParser = createOneOrMoreParser(digitParser)
+    const numParser = create_OneOrMoreParser(digitParser)
     const removewhitespace = (sinput: string) => {
         const s = sinput.slice(sinput)
-        const r = createOneOrMoreParser(createPredicateParser((ss) => ss.substring(0,1).match(/[ ]/g) ))(s)
+        const r = create_OneOrMoreParser(createPredicateParser((ss) => ss.substring(0,1).match(/[ ]/g) ))(s)
         if(Maybe.isNothing())
     let s = removewhitespace(sinput)
     return numParser(s)
-    const r = digit(s)
-    let num = ""
-    if(Maybe.isNothing(r)) {
-        return Maybe.nothing()
-    }
-    const pair = Maybe.get_value(r)
-    num = pair.value
-    const remain = pair.remaining_input
-    const r2 = number(remain)
-    if(!Maybe.isNothing(r2)) {
-        const pair2 = Maybe.get_value(r2)
-        num = num + pair2.value
-        const numberValue = parseInt(num)
-        if(isNaN(numberValue))
-            throw new Error(`something went wrong` )
-        Maybe.just(PPairClass.make(num, pair2.remaining_input)) 
+    // const r = digit(s)
+    // let num = ""
+    // if(Maybe.isNothing(r)) {
+    //     return Maybe.nothing()
+    // }
+    // const pair = Maybe.get_value(r)
+    // num = pair.value
+    // const remain = pair.remaining_input
+    // const r2 = number(remain)
+    // if(!Maybe.isNothing(r2)) {
+    //     const pair2 = Maybe.get_value(r2)
+    //     num = num + pair2.value
+    //     const numberValue = parseInt(num)
+    //     if(isNaN(numberValue))
+    //         throw new Error(`something went wrong` )
+    //     Maybe.just(PPairClass.make(num, pair2.remaining_input)) 
 }
 
 ```

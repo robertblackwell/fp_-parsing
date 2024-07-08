@@ -1,0 +1,9 @@
+site_name: Functional Programming - A persoonal Exploration in TS
+theme:
+  name: readthedocs
+nav:
+  -  Introduction: '01_introduction.md'
+  - The Maybe Monad: '02_maybe_monad.md'
+  - Parsing: '02_parsing_intro.md'
+  - Combining Parsers: '03_building_parsers.md'
+  - Ast: '04_ast.md'

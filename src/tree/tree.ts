@@ -15,7 +15,7 @@ export class NumberNode extends TreeNode {
         this.value = v
     }
     static make(v: number): NumberNode {
-        return new NumberNode(v)
+        return Object.freeze(new NumberNode(v))
     }
 }
 export class CharNode extends TreeNode {
@@ -28,7 +28,7 @@ export class CharNode extends TreeNode {
         this.ch = ch
     }
     static make(ch: string): CharNode {
-        return new CharNode(ch)
+        return Object.freeze(new CharNode(ch))
     }
 }
 
@@ -39,7 +39,7 @@ export class PlusSignNode extends TreeNode {
         this.ch = "+"
     }
     static make(): PlusSignNode {
-        return new PlusSignNode()
+        return Object.freeze(new PlusSignNode())
     }
 }
 export class MultSignNode extends TreeNode {
@@ -49,7 +49,7 @@ export class MultSignNode extends TreeNode {
         this.ch = "*"
     }
     static make(): MultSignNode {
-        return new MultSignNode()
+        return Object.freeze(new MultSignNode())
     }
 }
 
@@ -60,7 +60,7 @@ export class BracketNode extends TreeNode {
         this.child = c
     }
     static make(c: TreeNode): BracketNode {
-        return new BracketNode(c)
+        return Object.freeze(new BracketNode(c))
     }
 }
 export class AddNode extends TreeNode {
@@ -74,7 +74,7 @@ export class AddNode extends TreeNode {
         this.op = PlusSignNode.make() 
     }
     static make(left: TreeNode, right: TreeNode): AddNode {
-        return new AddNode(left, right)
+        return Object.freeze(new AddNode(left, right))
     }
 }
 export class MultNode extends TreeNode {
@@ -88,7 +88,7 @@ export class MultNode extends TreeNode {
         this.op = MultSignNode.make()
     }
     static make(left: TreeNode, right: TreeNode): MultNode {
-        return new MultNode(left, right)
+        return Object.freeze(new MultNode(left, right))
     }
 }
 

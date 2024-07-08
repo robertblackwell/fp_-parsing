@@ -1,4 +1,4 @@
-import * as Tree from "./tree"
+import * as Tree from "./tree/tree"
 
 import * as Maybe from "./maybe"
 import * as PT from "./parser_pair"

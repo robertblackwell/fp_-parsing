@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Parsing - Functional Programming - A persoonal Exploration in TS</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Parsing";
+        var mkdocs_page_input_path = "02_parsing_intro.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Functional Programming - A persoonal Exploration in TS
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../01_introduction/">Introduction</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_maybe_monad/">The Maybe Monad</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Parsing</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#arithmetic-expressions">Arithmetic Expressions</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#what-is-a-parser">What is a parser ?</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../03_building_parsers/">Combining Parsers</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../04_ast/">Ast</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Functional Programming - A persoonal Exploration in TS</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Parsing</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="parsing">Parsing</h1>
+<h2 id="arithmetic-expressions">Arithmetic Expressions</h2>
+<p>Recall that the mission of this project is to build a programs that 
+-   parses arithmetic expressions into a data structure I will call an <code>Ast</code>, 
+-   evaluates such a data structure,
+-   and prints such a data structure.</p>
+<p>Here is a <code>BNF</code> specification of arithmetic expressions:</p>
+<pre><code>    expression  ::= term &quot;+&quot; expression | term
+    term        ::= factor &quot;*&quot; term | factor
+    factor      ::= number | &quot;(&quot; expression &quot;)&quot;
+    number      ::= digit , number | digit  
+    digit       ::= &quot;0&quot; | &quot;1&quot; | &quot;2&quot; | &quot;3&quot; | &quot;4&quot; | &quot;5&quot; | &quot;6&quot; | &quot;7&quot; | &quot;8&quot; | &quot;9&quot;
+</code></pre>
+<h2 id="what-is-a-parser">What is a parser ?</h2>
+<p>If you read a Haskel text book there is a chance you will find this little rhyme:</p>
+<pre><code>    A parser for things
+ is a functions from strings
+     to lists of pairs
+   of things and strings
+</code></pre>
+<p>Putting this rhyme into a definition yields something like:</p>
+<pre><code class="language-ts">
+type Parser&lt;T&gt; = (s: string) =&gt; Array&lt;[T, string]&gt;
+
+</code></pre>
+<p>While this definition is simple I have decided, after much experimentation, that I dont like it for "real" programs. My reasons:</p>
+<ol>
+<li>returning an empty array to signal parsing failed seems like a poor approach for a Functional Programming exercise. Why not use 
+<code>type Optional&lt;T&gt; = T | Null</code> or the <code>Maybe Monad</code>. See the section entitled <code>Maybe Monad</code> for details.</li>
+<li>I found no need for a parser to return multiple tuples in any of my experiments in this project.</li>
+<li>accessing the elements of a tupe using <code>tup[0]</code> and <code>tup[1]</code> seems error prone and difficult to change (many edit sites)</li>
+</ol>
+<p>Instead I decide to use the following (style) of definition.</p>
+<pre><code class="language-ts">type PPairClass&lt;T&gt; = ....
+type Parser&lt;T&gt; = (s: string) =&gt; Maybe&lt;PPairClass&lt;T&gt;&gt;
+</code></pre>
+<p>where <code>PPairClass</code> is a "pair like" immutable structure that satisfies the following interface. Immutable because the properties <code>value</code> and <code>remaining_input</code>
+are/should be read only.</p>
+<pre><code class="language-ts">interface PPairClass&lt;T&gt; {
+    static make&lt;T&gt;(v: T, remaining_input: string): PPairClass&lt;T&gt;;
+    readonly value: T
+    readonly remaining_input: string
+}
+</code></pre>
+<p>To simplify the notation I will henceforth use </p>
+<pre><code class="language-ts">
+type PP&lt;T&gt; = PPairClass&lt;T&gt;
+
+type Parser&lt;T&gt; = (sinput string) =&gt; Maybe&lt;PP&lt;T&gt;&gt;
+
+
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../02_maybe_monad/" class="btn btn-neutral float-left" title="The Maybe Monad"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../03_building_parsers/" class="btn btn-neutral float-right" title="Combining Parsers">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../02_maybe_monad/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../03_building_parsers/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

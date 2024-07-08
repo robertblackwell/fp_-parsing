@@ -47,7 +47,7 @@ export function evaluate_tree(n: Tree.TreeNode): number {
     }
 }
 /**
- * The above two functions walk a tree recursively, they look prretty much
+ * The above two functions walk a tree recursively, they look pretty much
  * the same except for the resulting value.
  * 
  * For these functions to work the "value" is required to support 4 operations:
@@ -56,22 +56,22 @@ export function evaluate_tree(n: Tree.TreeNode): number {
  * -    bracket a value
  * -    combine two values with a "+"
  * -    combine two values with a *
- */
-// interface TreeValue {
-//     // evalNumber(num: Tree.NumberNode): TreeValue,
-//     // bracket(n: TreeValue): TreeValue, 
-//     // add(a: TreeValue): TreeValue,
-//     // mult(a: TreeValue): TreeValue
-// }
+ *
+ * So lets define an interface that implements those operations
+ * and see if we can generalize the above two functons
+*/
+
 interface TreeValeOperations<TreeValue> {
     make(n: number): TreeValue,
     bracket(a: TreeValue): TreeValue,
     add(a: TreeValue, b: TreeValue): TreeValue,
     mult(a: TreeValue, b: TreeValue): TreeValue
 }
-function treeWalker<TreeValue>(
-    n: Tree.TreeNode, 
-    value_ops: TreeValeOperations<TreeValue>): TreeValue {
+
+
+
+function treeWalker<TreeValue>(n: Tree.TreeNode, value_ops: TreeValeOperations<TreeValue>): TreeValue 
+{
     function recursive_walker(n: Tree.TreeNode): TreeValue {
         if(Tree.isNumberNode(n)) {
             let nNode = Tree.asNumberNode(n)

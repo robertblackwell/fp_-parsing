@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Ast - Functional Programming - A persoonal Exploration in TS</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Ast";
+        var mkdocs_page_input_path = "04_ast.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Functional Programming - A persoonal Exploration in TS
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../01_introduction/">Introduction</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_maybe_monad/">The Maybe Monad</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_parsing_intro/">Parsing</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../03_building_parsers/">Combining Parsers</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Ast</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#convenience-node-types">Convenience Node Types</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#some-simple-parsers">Some Simple Parsers</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Functional Programming - A persoonal Exploration in TS</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Ast</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="abstract-syntax-tree">Abstract Syntax Tree</h1>
+<p>Most of the parser we deal with will (on success) produce part of a structure called an <code>Abstract Syntax Tree</code>. This will be a binary
+tree that represents the portion of the expression that has just been parsed.</p>
+<p>Ideally we would define the tree in a manner that parallels the BNF definition of an expression. In Haskell Something like:</p>
+<pre><code class="language-haskell">
+data TreeNode a = 
+    PlusNode TreeNode TreeNode
+    | MultNode TreeNode TreeNode
+    | BracketNode TreeNode
+    | NumberNode  string
+</code></pre>
+<p>However this or something like it is not possible in Typescript. After a good deal of experimentation I came to the 
+following Typescript immitation:</p>
+<pre><code class="language-ts">    abstract class TreeNode {....}
+    class PlusNode extends TreeNode  {left: TreeNode; right: TreeNode}
+    class MultNode extends TreeNode  {left: TreeNode; right: TreeNode}
+    class BracketNode  extends TreeNode  {inside: TreeNode}
+    class NumberNode extends TreeNode {value: number}
+</code></pre>
+<p>Each concrete class has a static method <code>make</code> that creates an instance of the class with the appropriate arguments, as follows:</p>
+<pre><code class="language-ts">    PlusNode.make(left: TreeNode, right: TreeNode)
+    MultNode.make(left: TreeNode, right: TreeNode)
+    BracketNode.make(child: TreeNode)
+    NumberNode.make(n: number)
+</code></pre>
+<p>each of these <code>make</code> functions return a <code>frozen</code> object to ensure immutability.</p>
+<p>When manipulating TreeNodes one often needs to know the concrete type of a <code>TreeNode</code>. To facilitate this
+there are a set of free functions with names like <code>isMultNode(node: TreeNode): boolean</code>
+which can be used in an if-ifelse-else chain. Once having determined the concrete type
+of a <code>TreeNode</code> such a node needs to be "cast" to the appropriate concrete type. There are 
+a suite of functions to do this, with error checking. Names like <code>asMultNode(node: TreeNode): MultNode</code>.</p>
+<p>The above arrangement provides an equivalent to the Haskell <code>data</code> statement provided earlier. However
+because of the <code>type casting</code> type safety depends on hand coded runtime checking.  </p>
+<p>Unfortunately this is as close as I can get in Typescript to Haskells pattern matching. </p>
+<h2 id="convenience-node-types">Convenience Node Types</h2>
+<p>Todo</p>
+<h2 id="some-simple-parsers">Some Simple Parsers</h2>
+<p>Consider the following simple parser:</p>
+<pre><code class="language-ts">/**
+ * Match any single character
+ */
+function parseAnyChar&lt;string&gt;(sinput: string): Maybe&lt;PPairClass&lt;string&gt;&gt; {
+    const s = removewhitespace(sinput)
+    if(sinput.length ==0)
+        return Maybe.nothing()
+    const value = s.substring(0,1)
+    const remainder = s.slice(1)
+    return Maybe.just(PPairClass.make(value, remainder))
+}
+/**
+ * Parse a digit without consuming leading white space
+ */ 
+function parseSingleDigit(sinput string): Maybe&lt;PPairClass&lt;string&gt;&gt; {
+    const s = sinput.slice(0)
+    if((s.length == 0) || (s.substring(0, 1).match(/[0-9]/g) == null) {
+        return Maybe.nothing()
+    }
+    const value = s.substring(0,1)
+    const remainder = s.slice(1)
+    return Maybe.just(PPairClass.make(value, remainder))
+}
+/**
+ * Return a parser that parses the next single character in the input if it satisfies 
+ * a predicate
+ */
+function createPredicateParser(predicate (ch: string) =&gt; boolean): Parser&lt;string&gt; {
+    return (s: string) =&gt; {
+        if((sinput.length == 0) || (! predicate(s.substring(0,1))))
+            return Maybe.nothing()
+        const value = s.substring(0,1)
+        const remainder = s.slice(1)
+        return Maybe.just(PPairClass.make(value, remaiinder))
+    }
+}
+</code></pre>
+<pre><code class="language-ts">/*
+ * Take a parser for a single character meeting some criteria and return
+ * a parser that detects greater than zero consecutive instances of such characters 
+*/
+function create_OneOrMoreParser(singleChParser: Parser&lt;string&gt;): Parser&lt;string&gt; {
+    function functionManyTimes(sinput: string) =&gt; {
+        let s = sinput.slice(0)
+        const r = singleChParser(s)
+        let parse_result = &quot;&quot;
+        if(Maybe.isNothing(r)) {
+            return Maybe.nothing()
+        }
+        const pair = Maybe.get_value(r)
+        const first_ok_char_as_str = pair.value
+        const remain = pair.remaining_input
+        const r2 = manyTimes(remain)
+        if(Maybe.isNothing(r2)) {
+            return Maybe.nothing()
+        }
+        const result_pair = Maybe.get_value(r2)
+        const subsequent_ok_chars_as_string = result_pair.value
+        const parse_result_string = first_digit_as_string  + subsequent_digits_as_string
+        return Maybe.just(PPairClass.make(parse_result, pair2.remaining_input)) 
+    }
+    return functionManyTimes
+}
+function parseNumber(sinput string): Maybe&lt;PPairClass&lt;number&gt;&gt; {
+    const digitParser = createPredicateParser((ss: string) =&gt; (ss.substring(0, 1).match(/[0-9]/g)))
+    const numParser = create_OneOrMoreParser(digitParser)
+    const removewhitespace = (sinput: string) =&gt; {
+        const s = sinput.slice(sinput)
+        const r = create_OneOrMoreParser(createPredicateParser((ss) =&gt; ss.substring(0,1).match(/[ ]/g) ))(s)
+        if(Maybe.isNothing())
+    let s = removewhitespace(sinput)
+    return numParser(s)
+    // const r = digit(s)
+    // let num = &quot;&quot;
+    // if(Maybe.isNothing(r)) {
+    //     return Maybe.nothing()
+    // }
+    // const pair = Maybe.get_value(r)
+    // num = pair.value
+    // const remain = pair.remaining_input
+    // const r2 = number(remain)
+    // if(!Maybe.isNothing(r2)) {
+    //     const pair2 = Maybe.get_value(r2)
+    //     num = num + pair2.value
+    //     const numberValue = parseInt(num)
+    //     if(isNaN(numberValue))
+    //         throw new Error(`something went wrong` )
+    //     Maybe.just(PPairClass.make(num, pair2.remaining_input)) 
+}
+
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../03_building_parsers/" class="btn btn-neutral float-left" title="Combining Parsers"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../03_building_parsers/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
