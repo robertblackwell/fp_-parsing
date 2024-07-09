@@ -1,3 +1,5 @@
+<!-- file:docs/02_parsing_introduction.md -->
+ 
 # Parsing
 
 ## Arithmetic Expressions
@@ -44,28 +46,13 @@ While this definition is simple I have decided, after much experimentation, that
 3.  accessing the elements of a tupe using `tup[0]` and `tup[1]` seems error prone and difficult to change (many edit sites)
 
 Instead I decide to use the following (style) of definition.
-
+ 
 ```ts
-type PPairClass<T> = ....
-type Parser<T> = (s: string) => Maybe<PPairClass<T>>
-```
-where `PPairClass` is a "pair like" immutable structure that satisfies the following interface. Immutable because the properties `value` and `remaining_input`
-are/should be read only.
+import {Maybe} from './maybe_v1'
 
-```ts
-interface PPairClass<T> {
-    static make<T>(v: T, remaining_input: string): PPairClass<T>;
-    readonly value: T
-    readonly remaining_input: string
+export type ParserResult<T> = {maybe_result: Maybe<T>, remaining: string}
+export function makeParserResult<T>(r: Maybe<T>, rem: string) {
+    return {maybe_result: r, remaining: rem}
 }
-```
-To simplify the notation I will henceforth use 
-
-```ts
-
-type PP<T> = PPairClass<T>
-
-type Parser<T> = (sinput string) => Maybe<PP<T>>
-
-
+export type Parser<T> = (sinput: string) => {maybe_result: Maybe<T>, remaining: string}
 ```

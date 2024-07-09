@@ -1,5 +1,10 @@
+//@file_start tree_walker.md
+//@markdown_start
+/*
+*/
+//@markdown_end
+//@code_start
 import * as Tree from "./tree"
-
 
 export function node_tostring(n: Tree.TreeNode): string {
     if(Tree.isNumberNode(n)) {
@@ -46,32 +51,32 @@ export function evaluate_tree(n: Tree.TreeNode): number {
         throw new Error(`walk if chain failed n.node_type = ${n.node_type}`)
     }
 }
-/**
- * The above two functions walk a tree recursively, they look prretty much
- * the same except for the resulting value.
- * 
- * For these functions to work the "value" is required to support 4 operations:
- * 
- * -    create a value from a number
- * -    bracket a value
- * -    combine two values with a "+"
- * -    combine two values with a *
- */
-// interface TreeValue {
-//     // evalNumber(num: Tree.NumberNode): TreeValue,
-//     // bracket(n: TreeValue): TreeValue, 
-//     // add(a: TreeValue): TreeValue,
-//     // mult(a: TreeValue): TreeValue
-// }
-interface TreeValueOperations<TreeValue> {
+//@code_end
+//@markdown_start
+/*
+The above two functions walk a tree recursively, they look pretty much
+the same except for the resulting value.
+
+For these functions to work the "value" is required to support 4 operations:
+
+-    create a value from a number
+-    bracket a value
+-    combine two values with a "+"
+-    combine two values with a *
+So lets define an interface that implements those operations
+and see if we can generalize the above two functons
+*/
+//@markdown_end
+//@code_start
+interface TreeValeOperations<TreeValue> {
     make(n: number): TreeValue,
     bracket(a: TreeValue): TreeValue,
     add(a: TreeValue, b: TreeValue): TreeValue,
     mult(a: TreeValue, b: TreeValue): TreeValue
 }
-function treeWalker<TreeValue>(
-    n: Tree.TreeNode, 
-    value_ops: TreeValueOperations<TreeValue>): TreeValue {
+
+function treeWalker<TreeValue>(n: Tree.TreeNode, value_ops: TreeValeOperations<TreeValue>): TreeValue 
+{
     function recursive_walker(n: Tree.TreeNode): TreeValue {
         if(Tree.isNumberNode(n)) {
             let nNode = Tree.asNumberNode(n)
@@ -139,3 +144,5 @@ export function treeAsNumber(n: Tree.TreeNode): number {
     const ops = new TreeNumberValueOperations()
     return treeWalker<number>(n, ops )
 }
+//@code_end
+//@file_end

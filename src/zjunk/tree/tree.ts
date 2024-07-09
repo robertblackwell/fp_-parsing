@@ -84,7 +84,7 @@ export abstract class TreeNode {
     
 }
 export class NumberNode extends TreeNode {
-    value: number
+    private value: number
     private constructor(v: number) {
         super("number")
         this.value = v

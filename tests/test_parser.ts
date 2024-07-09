@@ -1,4 +1,4 @@
-import * as Tree from "../src/tree"
+import * as Tree from "../src/zjunk/tree"
 import {treeAsNumber, treeAsString} from "../src/walker"
 import {
     Ast, 
