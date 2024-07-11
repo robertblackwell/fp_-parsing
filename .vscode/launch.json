@@ -25,7 +25,7 @@
             "request": "launch",
             "args": [
                 "${workspaceFolder}/bin/code2md.ts",
-                "${workspaceFolder}/src/02_parsing_intro.ts",
+                "${workspaceFolder}/src/monad.ts",
                 "${workspaceFolder}/docs"
             ],
             "runtimeArgs": [

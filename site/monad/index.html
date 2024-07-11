@@ -48,7 +48,11 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../02_parsing_intro/">Parsing</a>
+                <li class="toctree-l1"><a class="reference internal" href="../02_parsing_introduction/">Parsing</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../04_ast/">Ast</a>
                 </li>
               </ul>
               <ul>
@@ -56,7 +60,13 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../04_ast/">Ast</a>
+                <li class="toctree-l1"><a class="reference internal" href="../functor/">Functor</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Monad</a>
+    <ul class="current">
+    </ul>
                 </li>
               </ul>
       </div>
@@ -82,10 +92,147 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                
+                <!-- file:docs/monad.md -->
+
+<h1 id="monad">Monad</h1>
+<p>A monad is:
+-   a type constructor we will call <code>M</code>, that is a generic type with a single argument, 
+-   together with a set of functions (that is free functions or static methods of a class).</p>
+<ul>
+<li>
+<p>They are:</p>
+<ul>
+<li><code>fmap(f:(a: A) =&gt; B): (ma: M&lt;A&gt;) =&gt; M&lt;B&gt;</code></li>
+<li><code>eta(a: A): M&lt;A&gt;</code> often called <code>pure</code> or <code>return</code></li>
+<li><code>mu(mma: M&lt;M&lt;A&gt;&gt;): M&lt;A&gt;)</code></li>
+<li><code>kliesli((f:(a: A) =&gt; M&lt;B&gt;): (ma: M&lt;A&gt;) =&gt; M&lt;B&gt;</code></li>
+<li><code>bind(ma: M&lt;A&gt;, f:(a: A) -&gt; M&lt;B&gt;): M&lt;B&gt;</code></li>
+<li><code>kliesliA2: (f:(a:A, b:B) =&gt; M&lt;C&gt;): (ma:M&lt;A&gt;, mb: M&lt;B&gt;) =&gt; M&lt;C&gt;</code></li>
+<li><code>app(f:(a:A) =&gt; B, ma: M&lt;A&gt;): M&lt;B&gt;</code></li>
+</ul>
+<p>Note not all of these functions are independent, that is some can be derived from the others.</p>
+<p>Generally in this project we will require <code>fmap</code>, <code>eta</code> and either <code>`bind</code> or <code>mu</code> to be provided
+for each instance of a monad and the others will be derived from those.</p>
+</li>
+</ul>
+<h1 id="a-more-formal-definition-of-a-monad">A more formal definition of a Monad</h1>
+<p>A Monad is a triple <code>(F, eta, mu)</code> or <code>(F, eta, bind)</code>where:</p>
+<ul>
+<li><code>F</code> is a functor</li>
+<li>each type A <code>eta</code> is a function <code>eta(A): (a:A) =&gt; F&lt;A&gt;</code></li>
+<li>each type A <code>mu</code> is a function <code>mu(A): (x:F&lt;F&lt;A&gt;&gt;) =&gt; F&lt;A&gt;</code></li>
+<li>each A <code>bind</code> is a function `bind(A,B): (x: F<A>, f: (a:A) =&gt; F<B>) =&gt; F<B></li>
+</ul>
+<p>Notice the each of <code>eta</code>, <code>mu</code> and <code>bind</code> is actually a family of functions, one for each <code>A</code>. Sometimes in
+a formula we need to identify which instance of <code>eta</code> or <code>mu</code> we are talking about. The convention in CT is to 
+provide that information as a subscript. But thats difficult to do in markdown inside of a code block. Hence, in
+discussions, we will pretend <code>eta</code> and <code>mu</code> are function so <code>eta(A) : A =&gt; F&lt;A&gt;</code>.</p>
+<p>The functions <code>eta</code> and <code>mu</code> must satisfy the rules:</p>
+<ul>
+<li><code>eta</code> and <code>mu</code> are <strong>natural</strong> in <code>A</code>. I might discuss later.</li>
+<li><code>mu(A) . F.fmap(eta) = identity of A</code></li>
+<li><code>mu(A) . mu(F&lt;A&gt;) = mu(A) . fmap(mu(A))</code></li>
+</ul>
+<p>the equiavelnt conditions on <code>eta</code> and <code>bind</code> are:</p>
+<ul>
+<li><code>eta</code> and <code>bind</code> are <strong>natural</strong> in <code>A</code> and <code>B</code>. I might discuss later.</li>
+<li><code>bind(A)(x: F&lt;A&gt;, eta(A): A =&gt; F&lt;A&gt;) == x</code></li>
+<li><code>bind(eta(A)(a), f: A =&gt; F&lt;B&gt;) == f(a)</code></li>
+<li><code>bind(bind(ma, f), g) == bind(ma, ((x) =&gt; bind(f(x), g)))</code> where <code>g: B =&gt; F C</code> and <code>f: A =&gt; F B</code></li>
+</ul>
+<h2 id="start-with-the-core-monad-elements">Start with the core monad elements</h2>
+<p>Lets now assume we have a monad defined as a TS module. The details of
+the generic type <code>Type&lt;T&gt;</code> and the functions <code>fmap</code>, <code>eta</code>, and <code>mu</code> 
+are left unspecified as we do not wish to use the specific details of any particular monad.</p>
+<pre><code class="language-ts">type Type&lt;T&gt; = ...
+const fmap&lt;A, B&gt;: (f:(a: A) =&gt; B): (ma: Type&lt;A&gt;) =&gt; Type&lt;B&gt; = ...
+const eta&lt;A&gt;    : (a:A) =&gt; Type&lt;A&gt; = ....
+const mu&lt;A&gt;     :(a:Type&lt;Type&lt;A&gt;&gt;) =&gt; Type&lt;A&gt; = ....
+</code></pre>
+<p>Now we will construct some other well known Monad functions from those beginnings.</p>
+<h2 id="kliesli-function">Kliesli Function</h2>
+<p>The universal property of a Monad M is that forever <code>f: A =&gt; M.Type&lt;B&gt;</code> there is a unique
+<code>g: M.Type&lt;A&gt; =&gt; M&lt;B&gt;</code> sucn that <code>g . eta(A) = f</code>. </p>
+<p>In fact <code>g = mu(M.Type&lt;A&gt;) . M.fmap(f)</code></p>
+<p>I like to think of the function <code>g</code> as the Kliesli lifting of <code>f</code> and to write it as <code>kliesli(f)</code>.</p>
+<p>The following code is inside the module representing <code>M</code>. Note I have elaborate with the steps and the typing
+to ensure understanding of what is happening.</p>
+<pre><code class="language-ts">function kliesli&lt;A,B&gt;(f:(a: A) =&gt; Type&lt;B&gt;): (ma: Type&lt;A&gt;) =&gt; Type&lt;B&gt; {
+    const r1 = fmap(f)
+    return function(x:Type&lt;A&gt;): Type&lt;B&gt; {
+        const fmap_f: (x: Type&lt;A&gt;) =&gt; Type&lt;Type&lt;B&gt;&gt; = fmap(f)
+        const z1: Type&lt;Type&lt;B&gt;&gt;  = fmap_f(x)
+        const z2: Type&lt;B&gt; = mu(z1)
+        return z2
+    }
+}
+</code></pre>
+<h2 id="the-bind-function-in-terms-of-the-kliesli-function">The bind function in terms of the kliesli function</h2>
+<p>Haskel defines the <code>bind</code> function as an infix operation named <code>&gt;&gt;=</code>. TS does not permit custom infix operations so
+we have to be content with function of two arguments. To provide motivation </p>
+<pre><code class="language-ts">const ma: Type&lt;A&gt; 
+const f: (a:A) =&gt; Type&lt;B&gt;
+const mb: Type&lt;B&gt; = (ma &gt;&gt;= f) is the same as kliesli(f)(ms)
+</code></pre>
+<p>More formally</p>
+<pre><code class="language-ts">function bind&lt;T,S&gt;(x: Type&lt;T&gt;, f: (t:T) =&gt; Type&lt;S&gt;): Type&lt;S&gt; {
+    return kliesli(f)(x)
+}
+</code></pre>
+<h2 id="the-kliesli-function-from-bind">The kliesli function from bind</h2>
+<p>Going the other way we can define the <code>kliesli</code> function in terms of <code>bind</code>.</p>
+<pre><code class="language-ts">function kliesli(f:(a:A) =&gt; Type&lt;B&gt;): (ma: Type&lt;A&gt; =&gt; Type&lt;B&gt;) {
+    return function(ma: Type&lt;A&gt;): Type&lt;B&gt; {
+        return bind(ma, f)
+    }
+}
+</code></pre>
+<h2 id="the-mu-function-from-bind">The mu function from bind</h2>
+<pre><code class="language-ts">function mu(x: Type&lt;Type&lt;A&gt;): Type&lt;A&gt; {
+    const identity: Type&lt;A&gt; =&gt; Type&lt;A&gt; = (x) =&gt; x`
+    return bind(x, identity)
+}
+</code></pre>
+<h2 id="kliesli-in-n-dimensions-and-lifta2">Kliesli in n-dimensions and liftA2</h2>
+<p>A function <code>f: (a:A, b:B) =&gt; Type&lt;C&gt;</code> can be extended to a function <code>fprime: (ta: Type&lt;A&gt;, tb: Type&lt;B&gt;) =&gt; Type&lt;C&gt;</code>.</p>
+<p>The equation for <code>fprime(ta, tb)</code> is</p>
+<pre><code class="language-ts">function fprime(ta:Type&lt;A&gt;, tb: Type&lt;B&gt;): Type&lt;C&gt; {
+    bind(ta, (a) =&gt; bind(tb, (b) =&gt; f(a,b)))
+}
+</code></pre>
+<p>The relationship between <code>f</code> and <code>fprime</code> defines a function I call <code>kliesliA2</code> where <code>fprime = kliesliA2(f)</code>.</p>
+<p>This clearly generalizes to function of <code>n-variables</code> of the form <code>f: (a1: A1, a2: A2, ..... an: An) =&gt; Type&lt;C&gt;</code>
+which can be extended to a function <code>fprime:(ta1: Type&lt;A1&gt;, ta2: Type&lt;A2&gt;, ....., tan: Type&lt;An&gt;) =&gt; Type&lt;C&gt;</code>.</p>
+<p>In this n-ary case <code>fprime = kliesliAn(f)</code></p>
+<h2 id="monads-lift-n-ary-operations-to-n-ary-operation">Monads lift n-ary operations to n-ary operation</h2>
+<p>Given an n-ary operation <code>op: (a1: A1, a2: A2, ..... an: An) =&gt; B</code> apply <code>kliesliAn</code> to the
+function <code>eta(B) . op: (a1: A1, a2: A2, ..... an: An) =&gt; Type&lt;B&gt;</code></p>
+<h2 id="klieslia2-is-related-to-the-haskel-function-lifta2">KliesliA2 is related to the Haskel function <code>liftA2</code>.</h2>
+<p>Applying <code>kliesliA2</code> to the function (recall [A, B] is a tuple)</p>
+<pre><code class="language-ts">function(a:A, b:B): [Type&lt;[A,B]&gt;] {return eta([a, b])}
+</code></pre>
+<p>yields a function of type <code>[Type&lt;A&gt;, Type&lt;B&gt;] =&gt; Type&lt;[A, B]&gt;</code></p>
+<p>Consider the function <code>f:(a: A, f:(a:A) =&gt; B): Type&lt;B&gt; {return eta(f(a))}</code>. This can be lifted 
+by <code>kliesliA2</code> to a function</p>
+<pre><code class="language-ts">
+kliesli2(f): (ta: Type&lt;A&gt;, tf: Type&lt;(a:A) =&gt; B&gt;): T&lt;B&gt;
+
+</code></pre>
+<p>which through currying is equivalent to a function <code>(tf: Type&lt;(a:A) =&gt; B&gt;) =&gt; (Type&lt;A&gt; =&gt; Type&lt;B&gt;)</code>.</p>
+<p>This is the Haskel function <code>&lt;*&gt;</code>.</p>
+<p>The way types are written in TS makes the above somewhat difficult to express and obscures 
+what is going on. </p>
+<p>In CT language:</p>
+<p>Any function <code>f: A x B -&gt; Type&lt;C&gt;</code> lifts to a function `kliesli2<f>: Type<A> x Type<B> -&gt; Type<C></p>
+<p>Applying the previous sentence to the function <code>eta(AxB): A x B -&gt; Type&lt;A x B&gt;</code> yields a function <code>Type&lt;A&gt; x Type&lt;B&gt; -&gt; Type&lt;AxB&gt;</code>.</p>
+<p>And applying the same logic to the function <code>evaluate: ((A =&gt; B) x A) -&gt; B</code> which takes <code>(f: A=&gt;B, a:A)</code> to <code>f(a)</code>
+yields a function <code>Type&lt;(A =&gt; B)&gt; -&gt; (Type&lt;A&gt; =&gt; Type&lt;B&gt;). Agaiin this the Haskel function</code>&lt;*&gt;`.    </p>
               
             </div>
           </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../functor/" class="btn btn-neutral float-left" title="Functor"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
 
   <hr/>
 
@@ -106,6 +253,8 @@
   <div class="rst-versions" role="note" aria-label="Versions">
   <span class="rst-current-version" data-toggle="rst-current-version">
     
+    
+      <span><a href="../functor/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
   </span>

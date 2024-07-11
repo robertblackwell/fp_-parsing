@@ -38,19 +38,23 @@ type Parser<T> = (s: string) => Array<[T, string]>
 
 ```
 
-While this definition is simple I have decided, after much experimentation, that I dont like it for "real" programs. My reasons:
+While this definition is simple I have decided, after some experimentation, that I dont like it for "real" programs. My reasons:
 
 1.  returning an empty array to signal parsing failed seems like a poor approach for a Functional Programming exercise. Why not use 
 `type Optional<T> = T | Null` or the `Maybe Monad`. See the section entitled `Maybe Monad` for details.
 2.  I found no need for a parser to return multiple tuples in any of my experiments in this project.
 3.  accessing the elements of a tupe using `tup[0]` and `tup[1]` seems error prone and difficult to change (many edit sites)
 
-Instead I decide to use the following (style) of definition.
+Instead I decide to use the following (style) of definition. See the section entitled __Maybe Version 1__ for ane explanation
+of the Maybe monad.
  
 ```ts
 import {Maybe} from './maybe_v1'
 
 export type ParserResult<T> = {maybe_result: Maybe<T>, remaining: string}
+/**May have to change the definition of ParserResult
+export type PR<T> = Maybe<[T, string]> 
+*/
 export function makeParserResult<T>(r: Maybe<T>, rem: string) {
     return {maybe_result: r, remaining: rem}
 }

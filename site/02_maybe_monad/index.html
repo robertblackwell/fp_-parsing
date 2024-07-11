@@ -50,7 +50,11 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../02_parsing_intro/">Parsing</a>
+                <li class="toctree-l1"><a class="reference internal" href="../02_parsing_introduction/">Parsing</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../04_ast/">Ast</a>
                 </li>
               </ul>
               <ul>
@@ -58,7 +62,11 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../04_ast/">Ast</a>
+                <li class="toctree-l1"><a class="reference internal" href="../functor/">Functor</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../monad/">Monad</a>
                 </li>
               </ul>
       </div>
@@ -85,6 +93,9 @@
             <div class="section" itemprop="articleBody">
               
                 <h2 id="maybe-monad">Maybe Monad</h2>
+<p>I am introducing this example of a Monad early in the exposition because it will be required
+in the next couple of section. However a full treatment of Monads will be delayed until much later
+in this paper.</p>
 <p>The Haskell <strong>Maybe Monad</strong> is available in many languages under the name <strong>Optional</strong>, <strong>Nullable</strong>, or Union with null.</p>
 <p>In TS we can define a type that optionally has a value as <code>Nullable&lt;T&gt;</code> which is defined as <code>T | null</code>.</p>
 <p>However I chose to befine a type <code>Maybe&lt;T&gt;</code> more like the definition from Haskel.</p>
@@ -94,10 +105,10 @@
         this.value = v
     }
     public static just(t: T): Maybe&lt;T&gt; {
-        return new Maybe&lt;T&gt;(t)
+        return Object.freeze(new Maybe&lt;T&gt;(t))
     }
     public static nothing(): Maybe&lt;T&gt; {
-        return new Maybe&lt;T&gt;(null)
+        return Object.freeze(new Maybe&lt;T&gt;(null))
     }
     public static isNothing(r: Maybe&lt;T&gt;): bool {
         return (r.value === null)
@@ -112,12 +123,17 @@
 
 </code></pre>
 <p>The benefit of this definition is that it more closely follows the Haskel notation, and hence is an aid to understanding.</p>
+<p>Note some of the characteristics of this definition.</p>
+<p>It is not possible to make an instance of <code>Maybe&lt;T&gt;</code> that is invalid. The class constructor is private and there are only 2 
+constructors implemented as publis static functions.</p>
+<p>The type is opaque, the value property cannot be modified or queried except by the use of the give static function.</p>
+<p>Instances of <code>Maybe&lt;T&gt;</code> are immutable, doubly so no access to the <code>value</code> property and the instances are frozen.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../01_introduction/" class="btn btn-neutral float-left" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../02_parsing_intro/" class="btn btn-neutral float-right" title="Parsing">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../02_parsing_introduction/" class="btn btn-neutral float-right" title="Parsing">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -143,7 +159,7 @@
       <span><a href="../01_introduction/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../02_parsing_intro/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../02_parsing_introduction/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

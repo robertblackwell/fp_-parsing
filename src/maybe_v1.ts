@@ -7,84 +7,67 @@ I am introducing this example of a Monad early in the exposition because it will
 in the next couple of section. However a full treatment of Monads will be delayed until much later
 in this paper.
 
-The Haskell __Maybe Monad__ is available in many languages under the name __Optional__, __Nullable__, or Union with null.
+The Haskell __Maybe Monad__ is available in many languages under the name __Optional__, __Nullable__, or __Union with null__.
 
 In TS we can define a type that optionally has a value as `Nullable<T>` which is defined as `T | null`.
 
-However I chose to define a type `Maybe<T>` more like the definition from Haskel.
+However I chose to define a type `TYpe<T>` more like the definition from Haskel.
 
-For the moment I have ommitted many of the __monad__ characteristics. THat will be covered in a future section
+For the moment I have ommitted many of the __monad__ characteristics. That will be covered in a future section
 entitled __Maybe Monad V2__.
+
+
 */
 //@markdown_end
 //@code_start
 
-export class Maybe<T> {
-    private value: T | null
-    private constructor(v: T|null) {
-        this.value = v
+export type Type<T> = {value: T} | null
+
+export function just<T>(t: T): Type<T> {
+    return Object.freeze({value: t})
+}
+export function nothing<T>(): Type<T> {
+    return  null
+}
+export function isNothing<T>(r: Type<T>): boolean {
+        return (r === null)
     }
-    public static just<T>(t: T): Maybe<T> {
-        let obj: Maybe<T> = new Maybe<T>(t)
-        return obj
+
+export function getValue<T>(r: Type<T>): T {
+    if(r === null) {
+        throw Error("trying to be value from a nothing Maybe")
     }
-    public static nothing<T>(): Maybe<T> {
-        return new Maybe<T>(null)
-    }
-    public static fmap<A,B>(f:(a:A) => B): (x:Maybe<A>)=>Maybe<B> {
-        return function(x: Maybe<A>): Maybe<B> {
-            if(Maybe.isNothing(x)) {
-                return Maybe.nothing()
-            } else {
-                return Maybe.just(f(Maybe.getValue(x)))
-            }
-        }
-    }
-    public static isNothing<T>(r: Maybe<T>): boolean {
-        return (r.value === null)
-    }
-    public static getValue<T>(r: Maybe<T>): T {
-        if(r.value === null) {
-            throw Error("trying to be value from a nothing Maybe")
-        }
-        return r.value
-    }
+    return r.value
 }
 //@code_end
-//@ignore_start
-// class Maybe2<T> {
-//     value: T | null
-//     constructor() {
-//         this.value = null
-//     }
-//     static nothing<T>(): Maybe2<T> {
-//         return new Maybe2()
-//     }
-//     static just<T>(t: T): Maybe2<T> {
-//         let obj = new Maybe2<T>()
-//         obj.value = t
-//         return obj
-//     }
-//     static isNothing<T>(mb: Maybe2<T>): boolean {
-//         return (mb.value == null)
-//     }
-//     static getValue<T>(mb: Maybe2<T>): T {
-//         if(!mb.value) {
-//             throw new Error(`Maybe.getValue error is nothing `)
-//         } else {
-//             return mb.value
-//         }
-//     }
-// }
-//@ignore_end
 //@markdown_start
 /*
+
+## How to use this module
+
+The following code sample demonstrates how to use the `Maybe` module
+
+```ts
+import * as Maybe from 'maybe_v1`
+
+const maybevalue: Maybe.Type<string> = Maybe.just("thisisastring")
+
+if(Maybe.isNothing(maybevalue)) {
+    //... do something
+} else {
+    const v = Maybe.getValue(maybevalue)
+    // ... do something with v
+}
+
 The benefit of this definition is that it more closely follows the Haskel notation, and hence is an aid to understanding.
+
+The implementation as a module with a single type constructor exported is in keeping with the way __OCAML__, __Rescript__, and
+__ReasonML__ handle Functors, Applicatives and Monads.
 
 Note some of the characteristics of this definition.
 
-It is not possible to make an instance of `Maybe<T>` that is invalid. The class constructor is private and there are only 2 
-constructors implemented as publis static functions.
+It is not possible to make an instance of `Maybe.Type<T>` that is invalid. There are only 2 
+constructors implemented as functions.
 
 The type is opaque, the value property cannot be modified or queried except by the use of the give static function.
 

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Expression parser version 1 - Functional Programming - A persoonal Exploration in TS</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Expression parser version 1";
+        var mkdocs_page_input_path = "expression_parser_version_1.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Functional Programming - A persoonal Exploration in TS
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../01_introduction/">Introduction</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_maybe_monad/">The Maybe Monad</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_parsing_introduction/">Parsing</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../04_ast/">Ast</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../03_building_parsers/">Combining Parsers</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../functor/">Functor</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../monad/">Monad</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Functional Programming - A persoonal Exploration in TS</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Expression parser version 1</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <!-- file:docs/expression_parser_version_1.md -->
+
+<p>In this section we detail the code for version one of our expression parser.</p>
+<p>This is a version that makes almost no explicit use of <code>Functors</code>, <code>Applicatives</code> and <code>Monads</code>.</p>
+<p>The section starts with some usual TS preliminaries, such as import statments and some
+type definitions</p>
+<pre><code class="language-ts">import * as Tree from &quot;../src/tree&quot;
+import {
+    Parser, 
+    ParserResult, 
+    makeParserResult,
+    followedBy3, 
+    parseNumber, 
+    whitespaceIfy, 
+    createPredicateParser,
+} from &quot;../src/parsing_intro&quot;
+import {Maybe} from &quot;../src/maybe_v1&quot;
+
+type TNode = Tree.TreeNode
+</code></pre>
+<h1 id="parse-and-expression">Parse and expression</h1>
+<h2 id="expression-term-expression-term">expression ::= term + expression | term</h2>
+<p>Below we define a parser for <code>expression</code> which closely parallels the <strong>BNF</strong> definition of an expression.</p>
+<pre><code>exp ::= term + expression | term
+</code></pre>
+<p>Notice there are 2 implementations of the function <code>term_plus_expression</code>  </p>
+<pre><code class="language-ts">function expression(sinput: string): ParserResult&lt;TNode&gt; {
+    const s = removeLeadingWhitespace(sinput)
+    const r = parser_or([term_plus_expression_1, term_only], s)
+    return r
+}
+function term_plus_expression_1(sinput: string): ParserResult&lt;TNode&gt; {
+    const s  = removeLeadingWhitespace(sinput)
+    const {maybe_result: r1, remaining: rem1} = term(s)
+    if(Maybe.isNothing(r1) || (rem1.length === 0)) {
+        return makeParserResult(Maybe.nothing(), sinput)
+    }
+    const v1 = Maybe.getValue(r1)
+    const {maybe_result: r2, remaining: rem2} = parseAdditionSign(rem1)
+    if(Maybe.isNothing(r2)) {
+        return makeParserResult(Maybe.nothing(), sinput)
+    }
+    const v2: string = Maybe.getValue(r2)
+    let {maybe_result: r3, remaining: rem3} = expression(rem2)
+    if(Maybe.isNothing(r3)) {
+        return makeParserResult(Maybe.nothing(), sinput)
+    }
+    const v3 = Maybe.getValue(r3)
+    if(v1 === null || v3 === null) {
+        throw Error(&quot;&quot;) ///@todo - fix this
+    }
+    let newast = Tree.AddNode.make(v1, v3)
+    return makeParserResult(Maybe.just(newast), rem3)
+}
+function term_plus_expression_2(sinput: string): ParserResult&lt;TNode&gt; {
+    function add(left: TNode, op: string,  right: TNode): TNode {
+        let newast = Tree.AddNode.make(left, right)
+        return newast
+    } 
+    return followedBy3(term, parseAdditionSign, expression, add)(sinput)
+}
+function term_only(sinput: string): ParserResult&lt;TNode&gt; {
+    const s = removeLeadingWhitespace(sinput)
+    const {maybe_result: r, remaining: rem} = term(s)
+    if(Maybe.isNothing(r)) {
+        return makeParserResult(Maybe.nothing(), sinput)
+    }
+    const v = Maybe.getValue(r)
+    return makeParserResult(Maybe.just(v), rem)
+}
+</code></pre>
+<h2 id="term-factor-term-factor">term ::= factor * term | factor</h2>
+<p>Again notice that there are 2 implementations of `factor_times_term</p>
+<pre><code class="language-ts">function term(sinput: string): ParserResult&lt;TNode&gt; {
+    const rr = parser_or([factor_times_term_1, factor_only], sinput)
+    return rr
+}
+function factor_times_term_1(sinput: string): ParserResult&lt;TNode&gt; {
+    const s = removeLeadingWhitespace(sinput)
+    let {maybe_result: r1, remaining: rem1} = factor(s)
+    if(Maybe.isNothing(r1)) {
+        return makeParserResult(Maybe.nothing(), sinput)
+    }
+    const {maybe_result: r2, remaining: rem2} = parseMultiplySign(rem1)
+    if(Maybe.isNothing(r2)) {
+        return makeParserResult(Maybe.nothing(), sinput)
+    }
+    let {maybe_result: r3, remaining: rem3} = term(rem2)
+    if(Maybe.isNothing(r3)) {
+        return makeParserResult(Maybe.nothing(), sinput)
+    }
+    let left = Maybe.getValue(r1)
+    let right = Maybe.getValue(r3)
+    let newnode = Tree.MultNode.make(left, right)
+    return makeParserResult(Maybe.just(newnode), rem3)
+}
+function factor_times_term_2(sinput: string): ParserResult&lt;TNode&gt; {
+    function f(left: TNode, op: string, right: TNode): TNode {
+        let newnode = Tree.MultNode.make(left, right)
+        return newnode
+    } 
+    const rr = followedBy3(factor, parseMultiplySign, term, f)(sinput)
+    return rr
+}
+function factor_only(sinput: string): ParserResult&lt;TNode&gt; {
+    const s = removeLeadingWhitespace(sinput)
+    let {maybe_result: r, remaining: rem} = factor(s)
+    if(Maybe.isNothing(r)) {
+        return makeParserResult(Maybe.nothing(), sinput)
+    }
+    return makeParserResult(r, rem)
+}
+</code></pre>
+<h2 id="factor-number-expression">factor ::= number  | (expression)</h2>
+<pre><code class="language-ts">function factor(sinput: string): ParserResult&lt;TNode&gt; {
+    const s = removeLeadingWhitespace(sinput)
+    return parser_or([parseNumberExp, parseBracketExp], s)
+}
+function parseBracketExp(sinput: string): ParserResult&lt;TNode&gt; {
+    const s = removeLeadingWhitespace(sinput)
+    const {maybe_result: r1, remaining: rem1} = parseOpenBracket(s)
+    if(Maybe.isNothing(r1)) {
+        return makeParserResult(Maybe.nothing(), sinput)
+    }
+    const {maybe_result: r2, remaining: rem2} = expression(rem1)
+    if(Maybe.isNothing(r2)) {
+        return makeParserResult(Maybe.nothing(), sinput)
+    }
+    const {maybe_result: r3, remaining: rem3} = parseCloseBracket(rem2)
+    if(Maybe.isNothing(r3)) {
+        return makeParserResult(Maybe.nothing(), sinput)
+    }
+    const n = Maybe.getValue(r2)
+    const rnode = Tree.BracketNode.make(n)
+    return makeParserResult(Maybe.just(rnode), rem3)
+}
+
+function parseNumberExp(sinput: string) : ParserResult&lt;TNode&gt; {
+    const s = removeLeadingWhitespace(sinput)
+    const {maybe_result: r1, remaining: rem1} = parseNumber(s)
+    if(Maybe.isNothing(r1)) {
+        return makeParserResult(Maybe.nothing(), sinput)
+    }
+    const node = Tree.NumberNode.make(parseInt(Maybe.getValue(r1)))
+    return makeParserResult(Maybe.just(node), rem1)
+}
+</code></pre>
+<h2 id="primitive-parsers">Primitive Parsers</h2>
+<pre><code class="language-ts">const parseAdditionSign = whitespaceIfy(createPredicateParser((s) =&gt; (s === &quot;+&quot;)))
+const parseMultiplySign = whitespaceIfy(createPredicateParser((s) =&gt; (s === &quot;*&quot;)))
+const parseOpenBracket = whitespaceIfy(createPredicateParser((s) =&gt; (s === &quot;(&quot;)))
+const parseCloseBracket = whitespaceIfy(createPredicateParser((s) =&gt; (s === &quot;)&quot;)))
+function removeLeadingWhitespace(s: string): string {
+    if((s.length &gt; 0) &amp;&amp; (s.substring(0, 1) == &quot; &quot;)) {
+        return removeLeadingWhitespace(s.slice(1))
+    }
+    return s.slice(0)
+}
+</code></pre>
+<h2 id="more-ways-of-combining-parsers">More ways of combining parsers*/</h2>
+<pre><code class="language-ts">/** 
+ * Alternative - try each parser in order, on the original input, and return the result of the first that succeeds
+*/
+function parser_or(ps: Array&lt;Parser&lt;TNode&gt;&gt;, input: string): ParserResult&lt;TNode&gt; {
+    if(ps.length == 0) {
+        return makeParserResult(Maybe.nothing(), input)
+    }
+    const {maybe_result: r1, remaining: rem1} = ps[0](input)
+    if(Maybe.isNothing(r1)) {
+        return parser_or(ps.slice(1), input)
+    }
+    return makeParserResult(Maybe.just(Maybe.getValue(r1)), rem1)
+}
+</code></pre>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

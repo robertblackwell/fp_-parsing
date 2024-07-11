@@ -39,24 +39,28 @@ type Parser<T> = (s: string) => Array<[T, string]>
 
 ```
 
-While this definition is simple I have decided, after much experimentation, that I dont like it for "real" programs. My reasons:
+While this definition is simple I have decided, after some experimentation, that I dont like it for "real" programs. My reasons:
 
 1.  returning an empty array to signal parsing failed seems like a poor approach for a Functional Programming exercise. Why not use 
 `type Optional<T> = T | Null` or the `Maybe Monad`. See the section entitled `Maybe Monad` for details.
 2.  I found no need for a parser to return multiple tuples in any of my experiments in this project.
 3.  accessing the elements of a tupe using `tup[0]` and `tup[1]` seems error prone and difficult to change (many edit sites)
 
-Instead I decide to use the following (style) of definition.
+Instead I decide to use the following (style) of definition. See the section entitled __Maybe Version 1__ for ane explanation
+of the Maybe monad.
 */
 //@markdown_end
 //@code_start
-import {Maybe} from './maybe_v1'
+import * as Maybe from './maybe_v1'
 
-export type ParserResult<T> = {maybe_result: Maybe<T>, remaining: string}
-export function makeParserResult<T>(r: Maybe<T>, rem: string) {
+export type ParserResult<T> = {maybe_result: Maybe.Type<T>, remaining: string}
+/**May have to change the definition of ParserResult
+export type PR<T> = Maybe<[T, string]> 
+*/
+export function makeParserResult<T>(r: Maybe.Type<T>, rem: string) {
     return {maybe_result: r, remaining: rem}
 }
-export type Parser<T> = (sinput: string) => {maybe_result: Maybe<T>, remaining: string}
+export type Parser<T> = (sinput: string) => {maybe_result: Maybe.Type<T>, remaining: string}
 //@code_end
 //@file_end
 //@file_start 03_combining_parsers.md
@@ -79,7 +83,7 @@ whether or not preceeded by whitespace.
 /**
  * Match any single non-whitespace character
  */
-function parseAnyChar(sinput: string): {maybe_result: Maybe<string>, remaining: string} {
+function parseAnyChar(sinput: string): ParserResult<string> {
     if(sinput.length ==0)
         return {maybe_result: Maybe.nothing(), remaining: sinput}
     const value = sinput.substring(0,1)
@@ -97,7 +101,7 @@ single digit. Note we have not consumed leading whitespace.
 /**
  * Parse a digit without consuming leading white space
  */ 
-export function parseSingleDigit(sinput: string): {maybe_result: Maybe<string>, remaining: string} {
+export function parseSingleDigit(sinput: string): ParserResult<string>  {
     const s = sinput.slice(0)
     if((s.length == 0) || (s.substring(0, 1).match(/[0-9]/g) == null)) {
         return makeParserResult(Maybe.nothing(), sinput)
@@ -438,8 +442,6 @@ export function followedBy3<R,S,T,U>(pr: Parser<R>, ps: Parser<S>, pt: Parser<T>
 //@markdown_start
 /*
 */
-//@markdown_end
-//@mardown_start
 /*
 Remembering that `Parser<T> = (sinput: string) => Maybe<PP<T>>` we can generalize `followedBy` from a binary operation to an
 array operation. Such that a list of parsers can be applied one after the other.

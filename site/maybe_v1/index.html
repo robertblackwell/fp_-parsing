@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Interesting Links - Functional Programming - A persoonal Exploration in TS</title>
+    <title>Maybe v1 - Functional Programming - A persoonal Exploration in TS</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Interesting Links";
-        var mkdocs_page_input_path = "interesting_links.md";
+        var mkdocs_page_name = "Maybe v1";
+        var mkdocs_page_input_path = "maybe_v1.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -81,7 +81,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Interesting Links</li>
+      <li class="breadcrumb-item active">Maybe v1</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -90,12 +90,47 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="interesting-links">Interesting Links</h1>
-<p>https://stackoverflow.com/questions/45712106/why-are-promises-monads</p>
-<p>https://write.yiransheng.com/callcc</p>
-<p>https://itnext.io/continuations-in-typescript-db18402010bc</p>
-<p>https://curiosity-driven.org/monads-in-javascript</p>
-<p>https://maxhallinan.com/posts/2019/10/22/how-does-the-continuation-monad-work/</p>
+                <!-- file:docs/maybe_v1.md -->
+
+<h2 id="maybe-monad-version-1">Maybe Monad - Version 1</h2>
+<p>I am introducing this example of a Monad early in the exposition because it will be required
+in the next couple of section. However a full treatment of Monads will be delayed until much later
+in this paper.</p>
+<p>The Haskell <strong>Maybe Monad</strong> is available in many languages under the name <strong>Optional</strong>, <strong>Nullable</strong>, or Union with null.</p>
+<p>In TS we can define a type that optionally has a value as <code>Nullable&lt;T&gt;</code> which is defined as <code>T | null</code>.</p>
+<p>However I chose to define a type <code>Maybe&lt;T&gt;</code> more like the definition from Haskel.</p>
+<p>For the moment I have ommitted many of the <strong>monad</strong> characteristics. THat will be covered in a future section
+entitled <strong>Maybe Monad V2</strong>.</p>
+<pre><code class="language-ts">
+export class Maybe&lt;T&gt; {
+    private value: T | null
+    private constructor(v: T|null) {
+        this.value = v
+    }
+    public static just&lt;T&gt;(t: T): Maybe&lt;T&gt; {
+        let obj: Maybe&lt;T&gt; = new Maybe&lt;T&gt;(t)
+        return obj
+    }
+    public static nothing&lt;T&gt;(): Maybe&lt;T&gt; {
+        return new Maybe&lt;T&gt;(null)
+    }
+    public static isNothing&lt;T&gt;(r: Maybe&lt;T&gt;): boolean {
+        return (r.value === null)
+    }
+    public static getValue&lt;T&gt;(r: Maybe&lt;T&gt;): T {
+        if(r.value === null) {
+            throw Error(&quot;trying to be value from a nothing Maybe&quot;)
+        }
+        return r.value
+    }
+}
+</code></pre>
+<p>The benefit of this definition is that it more closely follows the Haskel notation, and hence is an aid to understanding.</p>
+<p>Note some of the characteristics of this definition.</p>
+<p>It is not possible to make an instance of <code>Maybe&lt;T&gt;</code> that is invalid. The class constructor is private and there are only 2 
+constructors implemented as publis static functions.</p>
+<p>The type is opaque, the value property cannot be modified or queried except by the use of the give static function.</p>
+<p>Instances of <code>Maybe&lt;T&gt;</code> are immutable, doubly so no access to the <code>value</code> property and the instances are frozen.</p>
               
             </div>
           </div><footer>

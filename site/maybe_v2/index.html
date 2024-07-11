@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Interesting Links - Functional Programming - A persoonal Exploration in TS</title>
+    <title>Maybe v2 - Functional Programming - A persoonal Exploration in TS</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Interesting Links";
-        var mkdocs_page_input_path = "interesting_links.md";
+        var mkdocs_page_name = "Maybe v2";
+        var mkdocs_page_input_path = "maybe_v2.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -81,7 +81,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Interesting Links</li>
+      <li class="breadcrumb-item active">Maybe v2</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -90,12 +90,54 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="interesting-links">Interesting Links</h1>
-<p>https://stackoverflow.com/questions/45712106/why-are-promises-monads</p>
-<p>https://write.yiransheng.com/callcc</p>
-<p>https://itnext.io/continuations-in-typescript-db18402010bc</p>
-<p>https://curiosity-driven.org/monads-in-javascript</p>
-<p>https://maxhallinan.com/posts/2019/10/22/how-does-the-continuation-monad-work/</p>
+                <!-- file:docs/maybe_v2.md -->
+
+<h1 id="maybe-monad-version-2">Maybe Monad - Version 2</h1>
+<p>This version has been expanded to contain all the <strong>Monad</strong> functions.</p>
+<p>Wraps a T value or is null - so we have Nullable<T>. 
+We could then do the standard TS thiing and check for null before using a Maybe value.
+However I wanted the Maybe Monad to be more overtly visible than that approach would have yielded.</p>
+<pre><code class="language-ts">export class Maybe2&lt;T&gt; {
+    value: T | null
+    constructor() {
+        this.value = null
+    }
+    static nothing&lt;T&gt;(): Maybe2&lt;T&gt; {
+        return new Maybe2()
+    }
+    static just&lt;T&gt;(t: T): Maybe2&lt;T&gt; {
+        let obj = new Maybe2&lt;T&gt;()
+        obj.value = t
+        return obj
+    }
+    static isNothing&lt;T&gt;(mb: Maybe2&lt;T&gt;): boolean {
+        return (mb.value == null)
+    }
+    static getValue&lt;T&gt;(mb: Maybe2&lt;T&gt;): T {
+        if(!mb.value) {
+            throw new Error(`Maybe.getValue error is nothing `)
+        } else {
+            return mb.value
+        }
+    }
+    static pure&lt;T&gt;(v: T): Maybe2&lt;T&gt; {
+        let obj = Maybe2.just(v) as Maybe2&lt;T&gt;
+        return obj
+    } 
+    /*
+    * The definition of a monad
+    */
+    static eta&lt;T&gt;(v: T): Maybe2&lt;T&gt; {
+        return Maybe2.pure(v)
+    }
+    static mu&lt;T&gt;(mmt: Maybe2&lt;Maybe2&lt;T&gt;&gt;): Maybe2&lt;T&gt; {
+        if(Maybe2.isNothing(mmt) || Maybe2.isNothing(Maybe2.getValue(mmt))) {
+            return Maybe2.nothing()
+        }
+        return Maybe2.getValue(Maybe2.getValue(mmt)) as unknown as Maybe2&lt;T&gt;
+    }
+}
+</code></pre>
               
             </div>
           </div><footer>

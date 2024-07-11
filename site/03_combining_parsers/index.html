@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Combining Parsers - Functional Programming - A persoonal Exploration in TS</title>
+    <title>03 combining parsers - Functional Programming - A persoonal Exploration in TS</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Combining Parsers";
-        var mkdocs_page_input_path = "03_building_parsers.md";
+        var mkdocs_page_name = "03 combining parsers";
+        var mkdocs_page_input_path = "03_combining_parsers.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -55,20 +55,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="../04_ast/">Ast</a>
                 </li>
               </ul>
-              <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">Combining Parsers</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#single-character-parsers">Single Character Parsers</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#the-one-or-more-parser">The One-or-more parser</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#whitespace">Whitespace</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#alternatives-or-the-or-parser">Alternatives or - the OR parser</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#the-followed-by-parser">The Followed-By Parser</a>
-    </li>
-    </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../03_building_parsers/">Combining Parsers</a>
                 </li>
               </ul>
               <ul>
@@ -93,7 +81,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Combining Parsers</li>
+      <li class="breadcrumb-item active">03 combining parsers</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -102,7 +90,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="combining-parsers">Combining Parsers</h1>
+                <!-- file:docs/03_combining_parsers.md -->
+
+<h1 id="combining-parsers">Combining Parsers</h1>
 <p>It will turn out that our goal of building a parser for arithmetic expressions will be achieved
 by combining simpler or more elementary parsers in a number of ways.</p>
 <h2 id="single-character-parsers">Single Character Parsers</h2>
@@ -112,12 +102,11 @@ whether or not preceeded by whitespace.</p>
 <pre><code class="language-ts">/**
  * Match any single non-whitespace character
  */
-function parseAnyChar&lt;string&gt;(sinput: string): {maybe_result: Maybe&lt;string&gt;, remaining: string} {
-    const s = removewhitespace(sinput)
+function parseAnyChar(sinput: string): {maybe_result: Maybe&lt;string&gt;, remaining: string} {
     if(sinput.length ==0)
         return {maybe_result: Maybe.nothing(), remaining: sinput}
-    const value = s.substring(0,1)
-    const remainder = s.slice(1)
+    const value = sinput.substring(0,1)
+    const remainder = sinput.slice(1)
     return {maybe_result: Maybe.just(value), remaining: remainder}
 }
 </code></pre>
@@ -126,10 +115,10 @@ single digit. Note we have not consumed leading whitespace.</p>
 <pre><code class="language-ts">/**
  * Parse a digit without consuming leading white space
  */ 
-function parseSingleDigit(sinput string): {maybe_result: Maybe&lt;string&gt;, remaining: string} {
+function parseSingleDigit(sinput: string): {maybe_result: Maybe&lt;string&gt;, remaining: string} {
     const s = sinput.slice(0)
-    if((s.length == 0) || (s.substring(0, 1).match(/[0-9]/g) == null) {
-        return makeParserResult(Maybe.nothing(), remaining)
+    if((s.length == 0) || (s.substring(0, 1).match(/[0-9]/g) == null)) {
+        return makeParserResult(Maybe.nothing(), sinput)
     }
     const value = s.substring(0,1)
     const remainder = s.slice(1)
@@ -142,19 +131,19 @@ a boolean predicate is a very useful tool.</p>
  * Return a parser that parses the next single character in the input if it satisfies 
  * a predicate
  */
-function createPredicateParser(predicate (ch: string) =&gt; boolean): Parser&lt;string&gt; {
-    return function(s: string){
-        if((sinput.length == 0) || (! predicate(s.substring(0,1))))
-            return {maybe_result: Maybe.nothing(), remaining: sinput}
-        const value = s.substring(0,1)
-        const remainder = s.slice(1)
-        return {maybe_result: Maybe.just(value), remaining: remainder}
+function createPredicateParser(predicate: (ch: string) =&gt; boolean): Parser&lt;string&gt; {
+    return function(sinput: string){
+        if((sinput.length == 0) || (! predicate(sinput.substring(0,1))))
+            return makeParserResult(Maybe.nothing(), sinput)
+        const value = sinput.substring(0,1)
+        const remainder = sinput.slice(1)
+        return makeParserResult(Maybe.just(value), remainder)
     }
 }
 </code></pre>
 <p>As the final example of this section we will make a parser that successfully parser
 a single whitespace character;</p>
-<pre><code class="language-ts">const oneWhitespaceCharacterParser = createPredicateParser((ss) =&gt; ss.substring(0,1).match(/[\s]/g) )
+<pre><code class="language-ts">const oneWhitespaceCharacterParser = createPredicateParser((ss) =&gt; (ss.substring(0,1).match(/[\s]/g) !== null))
 </code></pre>
 <h2 id="the-one-or-more-parser">The One-or-more parser</h2>
 <p>Its clear that in order to parser arithmentic expression we will need to be able to parse
@@ -167,72 +156,83 @@ parse a sequence of one or more digits.</p>
  * a parser that detects greater than zero consecutive instances of such characters 
 */
 function create_OneOrMoreParser(singleChParser: Parser&lt;string&gt;): Parser&lt;string&gt; {
-    function functionManyTimes(sinput: string) =&gt; {
+    return function manyTimes(sinput: string): ParserResult&lt;string&gt; {
         let s = sinput.slice(0)
-        const r = singleChParser(s)
+        const {maybe_result: v1, remaining: r1} = singleChParser(s)
         let parse_result = &quot;&quot;
-        if(Maybe.isNothing(r)) {
-            return Maybe.nothing()
+        if(Maybe.isNothing(v1)) {
+            return makeParserResult(Maybe.nothing(), r1)
+        } else {
+            // const pair = Maybe.get_value(r)
+            const first_digit_as_string = Maybe.getValue(v1)
+            // const remain = pair.remaining_input
+            const {maybe_result:v2, remaining:r2} = manyTimes(r1)
+            if(Maybe.isNothing(v2)) {
+                return makeParserResult(Maybe.just(first_digit_as_string), r1)
+            }
+            // const result_pair = Maybe.get_value(r2)
+            const subsequent_digits_as_string = Maybe.getValue(v2)
+            const parse_result_string = first_digit_as_string  + subsequent_digits_as_string
+            return makeParserResult(Maybe.just(parse_result_string), r2) 
         }
-        const pair = Maybe.get_value(r)
-        const first_ok_char_as_str = pair.value
-        const remain = pair.remaining_input
-        const r2 = manyTimes(remain)
-        if(Maybe.isNothing(r2)) {
-            return Maybe.nothing()
-        }
-        const result_pair = Maybe.get_value(r2)
-        const subsequent_ok_chars_as_string = result_pair.value
-        const parse_result_string = first_digit_as_string  + subsequent_digits_as_string
-        return Maybe.just(PPairClass.make(parse_result, pair2.remaining_input)) 
     }
-    return functionManyTimes
 }
 </code></pre>
 <p>The experienced Haskel programmer will observe that the <code>create_OneOrMoreParser()</code> could have
 used more of the <code>Monad</code> properties of the <code>Maybe Monad</code>. We will come back to that eventually.</p>
 <p>The one-or-more constructor makes parsing numbers (a string consisting only of digits) easy. As below.</p>
-<pre><code class="language-ts">function parseNumber(sinput: string): Maybe&lt;PPairClass&lt;string&gt;&gt; {
-    const digitParser = createPredicateParser((ss: string) =&gt; (ss.substring(0, 1).match(/[0-9]/g)))
+<pre><code class="language-ts">function parseNumber(sinput: string): ParserResult&lt;string&gt; {
+    const digitParser = createPredicateParser((ss: string) =&gt; (ss.substring(0, 1).match(/[0-9]/g) !== null))
     const numParser = create_OneOrMoreParser(digitParser)
-    return numParser(s)
+    const r = numParser(sinput)
+    return r
 }
 </code></pre>
 <p>As a second example of the use of the <code>create_OneOrMoreParser()</code> lets make a parser that can successfully parse
 uppercase words (sequences of upper case letters).</p>
-<pre><code class="language-ts">function parseUppercaseWords(sinput: string): Maybe&lt;PPairClass&lt;string&gt;&gt; {
-    const upperCaseLetterParser = createPredicateParser((ss: string) =&gt; (ss.substring(0, 1).match(/[A-Z]/g)))
+<pre><code class="language-ts">function parseUppercaseWord(sinput: string): ParserResult&lt;string&gt; {
+    const upperCaseLetterParser = createPredicateParser((ss: string) =&gt; (ss.substring(0, 1).match(/[A-Z]/g) !== null))
     const upperCaseWordParser = create_OneOrMoreParser(upperCaseLetterParser)
-    return upperCaseWordParser(s)
+    return upperCaseWordParser(sinput)
 }
 </code></pre>
 <h2 id="whitespace">Whitespace</h2>
 <p>The following strings <code>2 + 3* (4 +   1)</code> and <code>2+3*(4+1)</code> are equivalent as arithmetic expressions
 because whitespace between the terms does not change the interpretation of the expression.  </p>
 <p>Thus we have a decision to make. When we parse expressions do we keep track of the white space
-so that the exact input string can be recreated froom the <code>Ast</code> (such as string 1 above),
+so that the exact input string can be recreated from the <code>Ast</code> (such as string 1 above),
 do we use eliminate whitespace during the parsing process like in string 2 above, or
 maybe reduce each sequence of whitespace to a single <code>space character</code> like <code>2 + 3 * ( 4 + 1 )</code>.</p>
 <p>We will chose to eliminate whitespace.</p>
-<p>Before continuing lets make a function that parses a sequence of whitespace.</p>
-<pre><code class="language-ts">const whitespaceParser = create_OneOrMoreParser(oneWhitespaceCharParser) 
+<p>Next we demonstrate how to transform any parser into a parser that ignores leading whitespace.</p>
+<pre><code class="language-ts">function isWhitespaceChar(ch: string) {return (ch.substring(0,1).match(/[\s]/g) !== null)}
+const oneWhitespaceCharParser = createPredicateParser(isWhitespaceChar)
+const whitespaceParser = create_OneOrMoreParser(oneWhitespaceCharParser)
+function stripLeadingWhitespace(sinput: string): string {
+    let tmp = sinput.slice(0)
+    while(true) {
+        if(isWhitespaceChar(tmp[0])) {
+            tmp = tmp.slice(1)
+        } else {
+            break
+        }
+    }
+    return tmp
+} 
 </code></pre>
 <p>Hence many of the parser function we design will be required to eliminate all whitespace from the front
 of their input string before attempting to parse an input string. </p>
 <p>Consider a parser <code>const p: (sinput: string) =&gt; Maybe&lt;PP&lt;T&gt;&gt;</code>.</p>
 <p>Here is a function that converts that parser <code>p</code> to a new parser that strips whitespace from the front of the input
 string.</p>
-<pre><code class="language-ts">function whitespaceIfy(p  (sinput: string) =&gt; Maybe&lt;PP&lt;T&gt;&gt;) (sinput: string) =&gt; Maybe&lt;PP&lt;T&gt;&gt; {
-    return function(sinput: string): Maybe&lt;PP&lt;T&gt;&gt; {
-        const r = whitespaceParser(sinput)
-        const sin = (Maybe.isNothing(r)) ? sinput: Maybe.get_remainder(r)
-        return p(sin)
+<pre><code class="language-ts">function whitespaceIfy&lt;T&gt;(p: Parser&lt;T&gt;): Parser&lt;T&gt; {
+    return function(sinput: string): ParserResult&lt;T&gt; {
+        return p(stripLeadingWhitespace(sinput))
     }
 }
-
 </code></pre>
 <h2 id="alternatives-or-the-or-parser">Alternatives or - the OR parser</h2>
-<p>Consider that task of parsing strings which are either </p>
+<p>Consider the task of parsing strings which are either </p>
 <ul>
 <li>numbers, a sequence of digits</li>
 <li>capitalized words, a sequence of uppercase letters</li>
@@ -243,17 +243,17 @@ string.</p>
 <li>if <code>parseNumber()</code> fails then apply <code>parseUppercaseWords()</code> and use its return value.</li>
 </ul>
 <p>In code this looks like:</p>
-<pre><code class="language-ts">function parseNumberOrUppercaseWord(sinput string): Maybe&lt;PPairClass&lt;string&gt;&gt; {
-    const r1 = parserNumber(sinput)
-    if(Maybe.isNothing(r1)) {
-        const r2 = parseUppercaseWord(sinput)
-        if(Maybe.isNothing(r2))
-            return Maybe.nothing&lt;string&gt;()
-        const numb = r2.get_value()
-        return Maybe.just&lt;string&gt;(numb))
+<pre><code class="language-ts">function parseNumberOrUppercaseWord(sinput: string): ParserResult&lt;string&gt; {
+    const {maybe_result, remaining} = parseNumber(sinput)
+    if(Maybe.isNothing(maybe_result)) {
+        const {maybe_result:v, remaining:rem} = parseUppercaseWord(sinput)
+        if(Maybe.isNothing(v))
+            return makeParserResult(Maybe.nothing&lt;string&gt;(), remaining)
+        const numbstr = Maybe.getValue(v)
+        return makeParserResult(Maybe.just&lt;string&gt;(numbstr), rem)
     }
-    const s string = r1.get_value()
-    return Maybe.just&lt;string&gt;(s)
+    const s: string = Maybe.getValue(maybe_result)
+    return makeParserResult(Maybe.just&lt;string&gt;(s), remaining)
 }
 </code></pre>
 <p>Infact this is a general construct. Given two parsers:</p>
@@ -262,23 +262,26 @@ string.</p>
 <li><code>const p2: (s string) =&gt; Maybe&lt;PPairClass&lt;R&gt;&gt;</code></li>
 </ul>
 <p>We can get a <code>p1_OR_p2</code> parser as follows:</p>
-<pre><code class="language-ts">function OR_parser(p1 (s string) =&gt; Maybe&lt;PPairClass&lt;T&gt;&gt;,  p2 (s string) =&gt; Maybe&lt;PPairClass&lt;R&gt;&gt;): (s string) =&gt; Maybe&lt;PPairClass&lt;T|R&gt;&gt; {
-    return function(sinput string): Maybe&lt;PPairCase&lt;T|R&gt;&gt; {
-        const r1 = parserNumber(sinput)
-        if(Maybe.isNothing(r1)) {
-            const r2 = parseUppercaseWord(sinput)
-            if(Maybe.isNothing(r2))
-                return Maybe.nothing&lt;T|R&gt;()
-            const v2 R = r2.get_value()
-            return Maybe.just&lt;T|R&gt;(v2))
+<pre><code class="language-ts">function OR_parser&lt;T,R&gt;(p1: Parser&lt;T&gt;,  p2: Parser&lt;R&gt;): Parser&lt;T|R&gt; {
+    return function(sinput: string): ParserResult&lt;T|R&gt; {
+        const {maybe_result:v1, remaining:r1} = p1(sinput)
+        if(Maybe.isNothing(v1)) {
+            const {maybe_result:v2, remaining:r2} = p2(sinput)
+            if(Maybe.isNothing(v2))
+                return makeParserResult(Maybe.nothing&lt;T|R&gt;(), r2)
+            else {
+                const vv = Maybe.getValue(v2)
+                return makeParserResult(Maybe.just&lt;T|R&gt;(vv), r2)
+            }
         }
-        const tvalue T = r1.get_value()
-        return Maybe.just&lt;T|R&gt;(s)
+        const tvalue = Maybe.getValue(v1)
+        return makeParserResult(Maybe.just&lt;T|R&gt;(tvalue), r1)
     }
 }
 </code></pre>
 <h2 id="the-followed-by-parser">The Followed-By Parser</h2>
-<p>Lets make a function that will parser variable names. Variable names:</p>
+<p>Lets make a function that will parser variable names. </p>
+<p>Variable names:</p>
 <ul>
 <li>must start with an upper or lower case letter or an underscore <code>_</code></li>
 <li>
@@ -289,54 +292,62 @@ string.</p>
 </li>
 </ul>
 <p>Its pretty clear that we can do this by first parsing the initial character with</p>
-<pre><code class="language-ts">const firstCharParser = createPredicateParser((s) =&gt; (s.substring(0, 1).match(/[a-zA-Z_]/g)) )
+<pre><code class="language-ts">function isValidFirstChar(s: string): boolean {return (s.substring(0, 1).match(/[a-zA-Z_]/g) !== null)}
+function isValidSubsequentChar(s: string): boolean {return (s.substring(0, 1).match(/[a-zA-Z0-9_]/g) !== null)}
+const firstCharParser = createPredicateParser(isValidFirstChar)
 </code></pre>
 <p>and then parsing all of the remaining characters with:</p>
-<pre><code class="language-ts">
-const subsequentCharParser = create_OneOrMoreParser(createPredicateParser((s) =&gt; (s.substring(0, 1).match(/[a-zA-Z_]/g))))
-
+<pre><code class="language-ts">const subsequentCharsParser = create_OneOrMoreParser(createPredicateParser(isValidSubsequentChar))
 </code></pre>
 <p>So now lets turn our attention to creating a function that combines <code>firstCharParser</code> and <code>sunsequentCharParser</code> 
 as described above.</p>
-<pre><code class="language-ts">function variableNameParser(sinput: string): Maybe&lt;PP&lt;string&gt;&gt; {
-    const r1 = firstCharParser(sinput)
-    if(Maybe.isNothing(r1)) {
-        return r1
+<pre><code class="language-ts">function parseVariableName(sinput: string): ParserResult&lt;string&gt; {
+    const {maybe_result:v1, remaining:r1} = firstCharParser(sinput)
+    if(Maybe.isNothing(v1)) {
+        return makeParserResult(Maybe.nothing(), r1)
     }
-    return subsequentCharParser(Maybe.get_value(r1))
+    const first_char = Maybe.getValue(v1)
+    const {maybe_result: v2, remaining:r2} = subsequentCharsParser(r1)
+    if(Maybe.isNothing(v2)) {
+        return makeParserResult(Maybe.nothing(), sinput)
+    }
+    const subsequent_chars = Maybe.getValue(v2)
+    return makeParserResult(Maybe.just(first_char + subsequent_chars), r2)
 }
-
 </code></pre>
 <p>Again this can be generalized as:</p>
-<pre><code class="language-ts">function followedBy(p1: (sinput: string)=&gt;Maybe&lt;PP&lt;T&gt;&gt;, p2:(sinput: string) =&gt; Maybe&lt;PP&lt;T&gt;&gt;): (sinput: string) =&gt; Maybe&lt;PP&lt;T&gt;&gt; {
-    const r1 = p1(sinput)
-    if(Maybe.isNothing(r1)) {
-        return r1
+<pre><code class="language-ts">function followedBy&lt;T, U&gt;(p1: Parser&lt;T&gt;, p2: Parser&lt;U&gt;): Parser&lt;[T,U]&gt; {
+    return function(sinput: string) {
+        const {maybe_result: v1, remaining: r1} = p1(sinput)
+        if(Maybe.isNothing(v1)) {
+            return makeParserResult(Maybe.nothing(), r1)
+        }
+        const t1 = Maybe.getValue(v1)
+        const {maybe_result: v2, remaining: r2} = p2(r1)
+        if(Maybe.isNothing(v2)) {
+            return makeParserResult(Maybe.nothing(), sinput)
+        }
+        const u1 = Maybe.getValue(v2)
+        return makeParserResult(Maybe.just([t1, u1]), r2)
     }
-    return p2(Maybe.get_value(r1))
 }
-
 </code></pre>
 <p>Remembering that <code>Parser&lt;T&gt; = (sinput: string) =&gt; Maybe&lt;PP&lt;T&gt;&gt;</code> we can generalize <code>followedBy</code> from a binary operation to an
 array operation. Such that a list of parsers can be applied one after the other.</p>
 <pre><code class="language-ts">/**
- * You might recongnize this as a left_fold operation
+ * You might recognize this as a left_fold operation
  */ 
-function sequence(ps: Array&lt;Parser&lt;T&gt;&gt;): Parser&lt;T&gt; {
-    let p_accum = ps[0]
-    ps[1:].foreach((pnext) =&gt; {
-        p_accum = followedBy(p_accum, pnext)
-    })
-}
-
+// function sequence&lt;T&gt;(ps: Array&lt;Parser&lt;T&gt;&gt;): Parser&lt;T&gt; {
+//     let p_accum = ps[0]
+//     ps.slice(1).forEach((pnext) =&gt; {
+//         p_accum = followedBy(p_accum, pnext)
+//     })
+//     return p_accum
+// }
 </code></pre>
               
             </div>
           </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../04_ast/" class="btn btn-neutral float-left" title="Ast"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../functor/" class="btn btn-neutral float-right" title="Functor">Next <span class="icon icon-circle-arrow-right"></span></a>
-    </div>
 
   <hr/>
 
@@ -358,10 +369,6 @@ function sequence(ps: Array&lt;Parser&lt;T&gt;&gt;): Parser&lt;T&gt; {
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../04_ast/" style="color: #fcfcfc">&laquo; Previous</a></span>
-    
-    
-      <span><a href="../functor/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

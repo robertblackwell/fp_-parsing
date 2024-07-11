@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Functor - Functional Programming - A persoonal Exploration in TS</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Functor";
+        var mkdocs_page_input_path = "functor.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> Functional Programming - A persoonal Exploration in TS
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../01_introduction/">Introduction</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_maybe_monad/">The Maybe Monad</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../02_parsing_introduction/">Parsing</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../04_ast/">Ast</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../03_building_parsers/">Combining Parsers</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Functor</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#informally">Informally</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#representation-in-typescript-as-a-class">Representation in Typescript as a Class</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#functor-definition">Functor definition</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#representation-in-typescript-as-a-module">Representation in Typescript as a Module</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../monad/">Monad</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Functional Programming - A persoonal Exploration in TS</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Functor</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <!-- file:docs/functor.md -->
+
+<h1 id="functor">Functor</h1>
+<h2 id="informally">Informally</h2>
+<p>In this section we are going to discuss the concept of a <strong>Functor</strong>.</p>
+<p>In Functional Programming Functors are <code>type constructors</code> which take a type (say) <code>T</code> and make it into a new type
+which is often represented by the notation <code>F&lt;T&gt;</code> or <code>F T</code>.</p>
+<p>So far this looks like a generic type of one variable. However there are additional requirements.</p>
+<p>In addition to the type constructor a Functor is required to have an associated  function called <code>fmap</code> with the following signature:</p>
+<pre><code class="language-ts">fmap: ((a: A) =&gt; B) =&gt; (a: F&lt;A&gt;)=&gt;F&lt;B&gt;
+</code></pre>
+<p>In addition <code>fmap</code> must </p>
+<ul>
+<li>
+<p>take the identity function <code>identity: A =&gt; A</code> to the identity function <code>identity: F&lt;A&gt; =&gt; F&lt;A&gt;</code></p>
+</li>
+<li>
+<p>preserve composition. So if <code>f: A=&gt;B</code> and <code>g:B =&gt; C</code> then</p>
+</li>
+</ul>
+<pre><code class="language-ts">    fmap(g . f) = fmap(g) . fmap(f)
+</code></pre>
+<p>where <code>.</code> is the operation of function composition.</p>
+<p>Because a Functor takes a type as input and returns a type it is informally a type of function from <code>Types =&gt; Types</code>.
+A category Theorist would call it an <strong>endo functor</strong> on the categoru <strong>Hask</strong>. </p>
+<h2 id="representation-in-typescript-as-a-class">Representation in Typescript as a Class</h2>
+<p>It is difficult to represent a Functor in Typescript in a way where the language enforces all of the requireed element.</p>
+<p>Ideally we would do something like this:</p>
+<pre><code class="language-ts">abstract class Functor&lt;T&gt; {
+    abstract static fmap(f:(a:A) =&gt; B): (a: F&lt;A&gt;) =&gt; F&lt;B&gt;;
+}
+</code></pre>
+<p>but TS does not permit <code>abstract static methods</code>. Nor can we make this an interface as interfaces don't sufficietly support statis methods.</p>
+<p>So I am going to settle for something informal.</p>
+<h2 id="functor-definition">Functor definition</h2>
+<p>A functor is a pair (F, fmap) where :</p>
+<ul>
+<li>a <code>F</code> is a generic class with one type parameter </li>
+<li>and <code>fmap</code> is a static method of the class <code>F</code> where <code>F.fmap:((a:A) =&gt; B): (a: F&lt;A&gt;)=&gt;F&lt;B&gt;</code></li>
+<li>where F.fmap satisfies the identity and composition rules described above</li>
+</ul>
+<p>thus we often write the minimum requirement of a functor in pseudo TS as:</p>
+<pre><code class="language-ts">    class F&lt;T&gt; {
+        public static fmap&lt;A,B&gt;(f:(a:A)=&gt;B):(a:F&lt;A&gt; =&gt; F&lt;B&gt;) {
+            ......
+        } 
+    }
+</code></pre>
+<p>Of course this is not complete class definition as it requires possible properties and definitely a constructor.</p>
+<p>For an example see the definition of <code>Maybe.fmap</code> in the file <code>Maybe_v2.ts</code></p>
+<pre><code class="language-ts">class Functor&lt;T&gt;{
+    fmap&lt;A,B&gt;(f:(a:A) =&gt; B): ((x:F&lt;A&gt;)=&gt;F&lt;B&gt;) {}
+} 
+</code></pre>
+<h2 id="representation-in-typescript-as-a-module">Representation in Typescript as a Module</h2>
+<p>The idea here is that a function will be inplemented in a module, which in TS means a separate file
+with some <code>export</code> statments. </p>
+<p>For a functor the module should export a generic type, some contructor functions and other utility functions,
+and an <code>fmap</code> function.</p>
+<p>Consider the following definition of the <code>Maybe</code> functor as a module. </p>
+<pre><code class="language-ts">export type Type&lt;T&gt; = T | null
+export function nothing&lt;T&gt;(): Type&lt;T&gt; {return null}
+export function just&lt;T&gt;(t:T): Type&lt;T&gt; {return t}
+export function isNothing&lt;T&gt;(x: Type&lt;T&gt;): boolean {return x === null}
+export function getValue(x: Type&lt;T&gt;): T {
+    if(x === null) {
+        throw new Error(`trying to get value of nothing`)
+    } else {
+        return x
+    }
+}
+export function fmap&lt;A,B&gt;(f: (a:A) =&gt; B): (x:Type&lt;A&gt;) =&gt; Type&lt;B&gt; {
+    return function(x: Type&lt;A&gt;): Type&lt;B&gt; {
+        if(isNothing(x))
+            return nothing()
+        else
+            return just(f(getValue(x)))
+    }
+}
+</code></pre>
+<p>By convention we will have all modules that are functors export their single generic type with the name <code>Type</code></p>
+<p>The user of this Maybe module would use code as follows:</p>
+<pre><code class="language-ts">import * as Maybe from './maybe`
+
+const v: Maybe.Type&lt;string&gt; = Maybe.just(&quot;this is a string&quot;)
+
+if(Maybe.ifNothing(v)) {
+    // do something
+} else {
+    const internal_value = Maybe.getValue(v)
+    .... do something with internal_value
+}
+</code></pre>
+<p>In the first attempt at a parser for arithmetic expressions we used the <code>class based</code> definition of <code>Maybe</code>
+as that seemed more in keeping with TS from a stylistic point of view.</p>
+<p>However going forward we are going to use the <code>module</code> approach as it is very similar to the way <code>OCAML</code>, <code>Rescript</code>
+and <code>ReasonML</code> package Functors and Monads. Unfortunately TS does not have all the features of those languages so there
+will still be some rough spots.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../03_building_parsers/" class="btn btn-neutral float-left" title="Combining Parsers"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../monad/" class="btn btn-neutral float-right" title="Monad">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../03_building_parsers/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../monad/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

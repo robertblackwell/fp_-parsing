@@ -32,7 +32,7 @@ A category Theorist would call it an __endo functor__ on the categoru __Hask__.
 
 ## Representation in Typescript as a Class
 
-It is difficult to represent a Functor in Typescript in a way where the language enforces all of the required elements and conditions.
+It is difficult to represent a Functor in Typescript in a way where the language enforces all of the requireed element.
 
 Ideally we would do something like this:
 
@@ -42,7 +42,7 @@ abstract class Functor<T> {
 }
 ```
 
-but TS does not permit `abstract static methods`. Nor can we make this an interface as interfaces don't sufficietly support static methods.
+but TS does not permit `abstract static methods`. Nor can we make this an interface as interfaces don't sufficietly support statis methods.
 
 So I am going to settle for something informal.
 
@@ -75,7 +75,7 @@ class Functor<T>{
 ```
 ## Representation in Typescript as a Module
 
-The idea here is that a __Functor__ will be inplemented as a TS Module; which in TS means a separate file
+The idea here is that a function will be inplemented in a module, which in TS means a separate file
 with some `export` statments. 
 
 For a functor the module should export a generic type, some contructor functions and other utility functions,
@@ -126,75 +126,63 @@ as that seemed more in keeping with TS from a stylistic point of view.
 However going forward we are going to use the `module` approach as it is very similar to the way `OCAML`, `Rescript`
 and `ReasonML` package Functors and Monads. Unfortunately TS does not have all the features of those languages so there
 will still be some rough spots.
-//@markdown_end
+
 //@file_end
 //@file_start monad.md
 //@markdown_start
 /*
 # Monad
 A monad is:
-
 -   a type constructor we will call `M`, that is a generic type with a single argument, 
-
--   together with a set of functions (that is free functions or static methods of a class).
+-   together with a set of functions (that is free functions or statis methods of a class).
 
 -   They are:
     
     - `fmap(f:(a: A) => B): (ma: M<A>) => M<B>`
-
-    - `eta(a: A): M<A>` often called `pure` or `return`
-
+    - `eta(a: A): M<A>`
     - `mu(mma: M<M<A>>): M<A>)`
-
     - `kliesli((f:(a: A) => M<B>): (ma: M<A>) => M<B>`
-
     - `bind(ma: M<A>, f:(a: A) -> M<B>): M<B>`
-
-    - `kliesliA2: (f:(a:A, b:B) => M<C>): (ma:M<A>, mb: M<B>) => M<C>`
-
+    - `liftA2:(f:(a:A, b:B) => C): (ma:M<A>, mb: M<B>) => M<C>`
     - `app(f:(a:A) => B, ma: M<A>): M<B>`
          
-    Note not all of these functions are independent, that is some can be derived from the others.
+    -  not all of these functions are independent. That is some can
+       be derived from the others.
  
-    Generally in this project we will require `fmap`, `eta` and either ``bind` or `mu` to be provided
-    for each instance of a monad and the others will be derived from those.
+    -  in this project we will require `fmap`, `eta` and `mu` to be provided
+       for each instance of a monad and the others:
         
-# A more formal definition of a Monad
+        - kliesli
+        - bind
+        - liftA2
+        - app
 
-A Monad is a triple `(F, eta, mu)` or `(F, eta, bind)`where:
+        will be derived from those. 
+
+# Monad Definition
+
+A Monad is a triple `(F, eta, mu)` where:
 
 -   `F` is a functor
 -   each type A `eta` is a function `eta(A): (a:A) => F<A>`
 -   each type A `mu` is a function `mu(A): (x:F<F<A>>) => F<A>`
--   each A `bind` is a function `bind(A,B): (x: F<A>, f: (a:A) => F<B>) => F<B>`
 
-
-Notice the each of `eta`, `mu` and `bind` is actually a family of functions, one for each `A`. Sometimes in
+Notice the each of `eta` and `mu` is actually a family of functions, one for each `A`. Sometimes in
 a formula we need to identify which instance of `eta` or `mu` we are talking about. The convention in CT is to 
 provide that information as a subscript. But thats difficult to do in markdown inside of a code block. Hence, in
-discussions, we will pretend `eta` and `mu` are function so `eta(A) : A => F<A>`.
+discussions, we will pretend `eta` and `mu` are function sp `eta(A) : A => F<A>`.
 
 The functions `eta` and `mu` must satisfy the rules:
 
 -   `eta` and `mu` are __natural__ in `A`. I might discuss later.
 -   `mu(A) . F.fmap(eta) = identity of A`
--   `mu(A) . mu(F<A>) = mu(A) . fmap(mu(A))`
-
-the equivalent conditions on `eta` and `bind` are:
-
--   `eta` and `bind` are __natural__ in `A` and `B`. I might discuss later.
--   `bind(A)(x: F<A>, eta(A): A => F<A>) == x`
--   `bind(eta(A)(a), f: A => F<B>) == f(a)`
--   `bind(bind(ma, f), g) == bind(ma, ((x) => bind(f(x), g)))` 
-
-    -   where `g: B => F C` and `f: A => F B`
+-   `mu(A) . mu(F<A>) = mu(A) . fmap(mu(A))
 
 ## Start with the core monad elements
 
 Lets now assume we have a monad defined as a TS module. The details of
 the generic type `Type<T>` and the functions `fmap`, `eta`, and `mu` 
 are left unspecified as we do not wish to use the specific details of any particular monad.
-
 ```ts
 type Type<T> = ...
 const fmap<A, B>: (f:(a: A) => B): (ma: Type<A>) => Type<B> = ...
@@ -209,13 +197,12 @@ Now we will construct some other well known Monad functions from those beginning
 The universal property of a Monad M is that forever `f: A => M.Type<B>` there is a unique
 `g: M.Type<A> => M<B>` sucn that `g . eta(A) = f`. 
 
-In fact `g = mu(M.Type<A>) . M.fmap(f)`
+In fact `g = mu(M.Type<A>) . M.fmap(f).
 
-I like to think of the function `g` as the __Kliesli__ lifting of `f` and to write it as `kliesli(f)`.
+I like to think of the function `g` as the Kliesli lifting og `f` nd to write it as `kliesli(f)`.
 
-The following code is inside the module representing `M`. 
-
-Note I have elaborate the steps and the typing to aid understanding of what is happening.
+The following code is inside the module representing `M`. Note I have elaborate with the steps and the typing
+to ensure understanding of what is ahppening.
 
 ```ts
 function kliesli<A,B>(f:(a: A) => Type<B>): (ma: Type<A>) => Type<B> {
@@ -228,7 +215,7 @@ function kliesli<A,B>(f:(a: A) => Type<B>): (ma: Type<A>) => Type<B> {
     }
 }
 ```
-## The bind function in terms of the kliesli function
+## The bind function
 
 Haskel defines the `bind` function as an infix operation named `>>=`. TS does not permit custom infix operations so
 we have to be content with function of two arguments. To provide motivation 
@@ -239,74 +226,34 @@ const mb: Type<B> = (ma >>= f) is the same as kliesli(f)(ms)
 ```
 More formally
 
-```ts
+```
 function bind<T,S>(x: Type<T>, f: (t:T) => Type<S>): Type<S> {
-    return kliesli(f)(x)
+    return this.kliesli(f)(x)
 }
 ```
+## Kliesli in n-dimensions and liftA2
 
-## The kliesli function from bind
+A function `f: (a:A, b:B) => Type<C>` can be extended to a function `fprime: (ta: Type<A>, tb: Type<B>) => Type<C>.
 
-Going the other way we can define the `kliesli` function in terms of `bind`.
-
-```ts
-function kliesli(f:(a:A) => Type<B>): (ma: Type<A> => Type<B>) {
-    return function(ma: Type<A>): Type<B> {
-        return bind(ma, f)
-    }
-}
-```
-## The mu function from bind
-
-```ts
-function mu(x: Type<Type<A>): Type<A> {
-    const identity: Type<A> => Type<A> = (x) => x
-    return bind(x, identity)
-}
-```
-## Kliesli in n-dimensions
-
-A function 
-```ts
-f: (a:A, b:B) => Type<C>
-``` 
-
-can be extended to a function 
-
-```ts
-fprime: (ta: Type<A>, tb: Type<B>) => Type<C>
-```
-
-as follows
+The equation for `fprime(ta, tb)` is
 
 ```ts
 function fprime(ta:Type<A>, tb: Type<B>): Type<C> {
     bind(ta, (a) => bind(tb, (b) => f(a,b)))
 }
 ```
-The relationship between `f` and `fprime` defines a function I call __kliesliA2__ where `fprime = kliesliA2(f)`.
+This clearly generalizes to function of `n-variables` of the form `f: (a1: A1, a2: A2, ..... an: An) => Type<C>
+which can be extended to a function `fprime:(ta1: Type<A1>, ta2: Type<A2>, ....., tan: Type<An>) => Type<C>.
 
-This clearly generalizes to function of `n-variables` of the form `f: (a1: A1, a2: A2, ..... an: An) => Type<C>`
-which can be extended to a function `fprime:(ta1: Type<A1>, ta2: Type<A2>, ....., tan: Type<An>) => Type<C>`.
+The relationship between `f` and `fprime` defines a function I call `kliesliA2` where `fprime = kliesliA2(f)`.
 
-In this n-ary case the previous paragraph defines __kliesliAn__ as `fprime = kliesliAn(f)`
+KliesliA2 is related to the Haskel function `liftA2`.
 
-## Monads lift n-ary operations to n-ary operation
 
-Given an n-ary operation `op: (a1: A1, a2: A2, ..... an: An) => B` apply `kliesliAn` to the
-function `eta(B) . op: (a1: A1, a2: A2, ..... an: An) => Type<B>`
+Applying `kliesliA2` to the function `function(a:A, b:B): [Type<[A,B]>] {return eta([a, b])}` 
+yields a function of type `[Type<A>, Type<B>] => Type<[A, B]>
 
-## KliesliA2 is related to the Haskel function `liftA2`.
-
-Applying `kliesliA2` to the function (recall [A, B] is a tuple)
-
-```ts
-function(a:A, b:B): [Type<[A,B]>] {return eta([a, b])}
-```
-
-yields a function of type `[Type<A>, Type<B>] => Type<[A, B]>`
-
-Consider the function `f:(a: A, f:(a:A) => B): Type<B> {return eta(f(a))}`. This can be lifted 
+Consider the function `f:(a: A, f:(a:A) => B): Type<B> {return eta(f(a))}. This can be lifted 
 by `kliesliA2` to a function
 
 ```ts
@@ -315,8 +262,7 @@ kliesli2(f): (ta: Type<A>, tf: Type<(a:A) => B>): T<B>
 
 ```
 
-which through currying is equivalent to a function `(tf: Type<(a:A) => B>) => (Type<A> => Type<B>)`.
-
+which through currying is equivalent to a function `(tf: Type<(a:A) => B>) => (Type<A> => Type<B>).
 This is the Haskel function `<*>`.
 
 The way types are written in TS makes the above somewhat difficult to express and obscures 
@@ -324,17 +270,15 @@ what is going on.
 
 In CT language:
 
-Any function `f: A x B -> Type<C>` lifts to a function `kliesli2<f>: Type<A> x Type<B> -> Type<C>`
+Any function `f: A x B -> Type<C>` lifts to a function `kliesli2<f>: Type<A> x Type<B> -> Type<C>
 
 Applying the previous sentence to the function `eta(AxB): A x B -> Type<A x B>` yields a function `Type<A> x Type<B> -> Type<AxB>`.
 
 And applying the same logic to the function `evaluate: ((A => B) x A) -> B` which takes `(f: A=>B, a:A)` to `f(a)`
-yields a function `Type<(A => B)> -> (Type<A> => Type<B>)`. Agaiin this the Haskel function `<*>`.    
+yields a function `Type<(A => B)> -> (Type<A> => Type<B>). Agaiin this the Haskel function `<*>`.    
 
-*/
-//@markdown_end
-//@ignore_start
-/*
+
+
 
 ## The Haskell `app` or `<*>` function
 
@@ -405,11 +349,15 @@ app<A, B>(pf: Type<(a:A) => B>, pa: Type<A>): Type<B> {
         return lifted_f
     }
 ```
+    /**
      * And this is the proof the the existence of `liftA2` implies the existence of `<*>`
+     */
     app_another<A, B>(pf: M<(a:A) => B>, pa: M<A>): M<B> {
+        /**
          * liftA2 implemented using only <*> the alternative applicable definition
          * 
          * @TODO NOTE: something wrong must test
+         */
         const uncurried_id = (f: (x:A) => B, a:A) => f(a)
         const lifted_id = this.liftA2(uncurried_id)
         return lifted_id(pf, pa)
@@ -461,6 +409,5 @@ app<A, B>(pf: Type<(a:A) => B>, pa: Type<A>): Type<B> {
             return obj
         }
     }
-        */
-//@ignore_end
+//@code_end
 //@file_end

@@ -11,110 +11,67 @@ However I wanted the Maybe Monad to be more overtly visible than that approach w
 */
 //@markdown_end
 //@code_start
-export class Maybe2<T> {
-    value: T | null
-    constructor() {
-        this.value = null
+
+export type Type<T> = {value: T} | null
+
+export function just<T>(t: T): Type<T> {
+    return Object.freeze({value: t})
+}
+export function nothing<T>(): Type<T> {
+    return  null
+}
+export function isNothing<T>(r: Type<T>): boolean {
+        return (r === null)
     }
-    static nothing<T>(): Maybe2<T> {
-        return new Maybe2()
+
+export function getValue<T>(r: Type<T>): T {
+    if(r === null) {
+        throw Error("trying to be value from a nothing Maybe")
     }
-    static just<T>(t: T): Maybe2<T> {
-        let obj = new Maybe2<T>()
-        obj.value = t
-        return obj
-    }
-    static isNothing<T>(mb: Maybe2<T>): boolean {
-        return (mb.value == null)
-    }
-    static getValue<T>(mb: Maybe2<T>): T {
-        if(!mb.value) {
-            throw new Error(`Maybe.getValue error is nothing `)
+    return r.value
+}
+export function fmap<A,B>(f:(a:A) => B): (x: Type<A>) => Type<B> {
+    return function(x: Type<A>): Type<B> {
+        if(isNothing(x)) {
+            return nothing()
         } else {
-            return mb.value
+            return just(f(getValue(x)))
         }
     }
-    public static fmap<A,B>(f:(a:A) => B): (x:Maybe2<A>)=>Maybe2<B> {
-        return function(x: Maybe2<A>): Maybe2<B> {
-            if(Maybe2.isNothing(x)) {
-                return Maybe2.nothing()
-            } else {
-                return Maybe2.just(f(Maybe2.getValue(x)))
-            }
-        }
+}
+export function pure<T>(v: T): Type<T> {
+    let obj = just(v)
+    return obj
+} 
+/*
+* The definition of a monad
+*/
+export function eta<T>(v: T): Type<T> {
+    return pure(v)
+}
+export function mu<T>(mmt: Type<Type<T>>): Type<T> {
+    if(isNothing(mmt) || isNothing(getValue(mmt))) {
+        return nothing()
     }
-    static pure<T>(v: T): Maybe2<T> {
-        let obj = Maybe2.just(v) as Maybe2<T>
-        return obj
-    } 
-    /*
-    * The definition of a monad
-    */
-    static eta<T>(v: T): Maybe2<T> {
-        return Maybe2.pure(v)
-    }
-    static mu<T>(mmt: Maybe2<Maybe2<T>>): Maybe2<T> {
-        if(Maybe2.isNothing(mmt) || Maybe2.isNothing(Maybe2.getValue(mmt))) {
-            return Maybe2.nothing()
-        }
-        return Maybe2.getValue(Maybe2.getValue(mmt)) as unknown as Maybe2<T>
-    }
+    return getValue(mmt)
 }
 //@code_end
-//@ignore_start
+//@markdown_start
+/*
+## Functions that are derived from `eta` and `mu`
 
-export type Maybe<T> = T | null
+The remaining functions are all derived without reference to any particular
+properties of `Maybe` other than `fmap` `eta` and `mu`. Hence this
+derivation would work for any monad `M` -- BUT Typescript has no straightforward way
+of parameterizing the generic `Monad`.
+ 
+I need to investigate passing a parameter to a module using arguments in the import `url`
+*/
+//@markdown_end
+//@code_start
 
-export function just<T>(t:T): Maybe<T> {
-    return t
-}
-export function nothing(){return null}
-
-export function isNothing<T>(r: Maybe<T>){return (r == null)}
-
-export function get_value<T>(r: Maybe<T>): T {
-    if(isNothing(r)) {
-        throw new Error(`Maybe.get_value of nothing`)
-    }
-    return r as T
-}
-/**
- * Required to make `Maybe` a functor
- */
-export function fmap<T,S>(f:(t:T) => S): (x:Maybe<T>) => Maybe<S> {
-    function tmp(x:Maybe<T>): Maybe<S> {
-        if(x == null) {
-            return null
-        } else {
-            const just_x = x as T
-            return just(f(just_x))
-        }
-    }
-    return tmp
-}
-/**
- * `eta` and `mu` are minimum requirement to make `Maybe` a monad.
- */
-export function eta<T>(t: T): Maybe<T> {
-    return just(t)
-} 
-export function mu<T>(m: Maybe<Maybe<T>>): Maybe<T> {
-    if(m == null) {
-        return null
-    } else {
-        return m as T
-    }
-}
-/**
- * The remaining functions are all derived without reference to any particular
- * properties of `Maybe` other than `fmap` `eta` and `mu`. Hence this
- * derivation would work for any monad `M` -- BUT Typescript has no straightforward way
- * of parameterizing the generic `Monad`.
- * 
- * I need to investigate passing a parameter to a module using arguments in the import `url`
- */
-export function kliesli<T,S>(f: (a:T) => Maybe<S>) : (mt:Maybe<T>) => Maybe<S> {
-    function tmp(mt: Maybe<T>): Maybe<S> {
+export function kliesli<T,S>(f: (a:T) => Type<S>) : (mt: Type<T>) => Type<S> {
+    function tmp(mt: Type<T>): Type<S> {
         const fmap_f_mt = fmap(f)(mt)
         return mu(fmap_f_mt)
     }
@@ -123,15 +80,15 @@ export function kliesli<T,S>(f: (a:T) => Maybe<S>) : (mt:Maybe<T>) => Maybe<S> {
 /**
  * This is the Haskell `>>=` operation
  */
-export function bind<T,S>(x: Maybe<T>, f: (t:T) => Maybe<S>): Maybe<S> {
+export function bind<T,S>(x: Type<T>, f: (t:T) => Type<S>): Type<S> {
     return kliesli(f)(x)
 }
 /**
  * This is the Haskell `<*>` operation and is part of the proof that every Monad
  * is an applicative
  */
-export function app<A, B>(pf: Maybe<(a:A) => B>, pa: Maybe<A>): Maybe<B> {
-    const h = (pa: Maybe<A>) => {
+export function app<A, B>(pf: Type<(a:A) => B>, pa: Type<A>): Type<B> {
+    const h = (pa: Type<A>) => {
         const g = (f: (a:A) => B) => {
             const return_fab = (x:A) => eta(f(x))
             return bind(pa, return_fab)
@@ -145,10 +102,10 @@ export function app<A, B>(pf: Maybe<(a:A) => B>, pa: Maybe<A>): Maybe<B> {
  * This is one of the key applicative functions and the details prove that
  * the existence of an `<*>` operation implies the existence of the `liftA2` function. 
  */
-export function liftA2<A, B, C>(f: (a: A, b: B) => C): (x: Maybe<A>, y: Maybe<B>) => Maybe<C> {
+export function kliesliA2<A, B, C>(f: (a: A, b: B) => C): (x: Type<A>, y: Type<B>) => Type<C> {
     const curriedf = (a:A) =>{return (b:B) => f(a,b)}    
     const fmap_curriedf = fmap((curriedf))
-    const lifted_f = (pa: Maybe<A>, pb: Maybe<B>) => {
+    const lifted_f = (pa: Type<A>, pb: Type<B>) => {
         return app(fmap_curriedf(pa), pb)
     }
     return lifted_f
@@ -162,7 +119,7 @@ export function liftA2<A, B, C>(f: (a: A, b: B) => C): (x: Maybe<A>, y: Maybe<B>
  * 
  * eg choice3(ma1, ma2, ma3) = choice(choice(ma1, ma2), ma3)
  */
-export function choice<A>(ma1: Maybe<A>, ma2: Maybe<A>): Maybe<A> {
+export function choice<A>(ma1: Type<A>, ma2: Type<A>): Type<A> {
     if(isNothing(ma1)) {
         if(isNothing(ma2)) {
             return nothing()
@@ -171,22 +128,25 @@ export function choice<A>(ma1: Maybe<A>, ma2: Maybe<A>): Maybe<A> {
     }
     return ma1
 }
+//@code_end
+//@markdown_start
+/*
 
+//And this is the proof the the existence of `liftA2` implies the existence of `<*>`
 
-/**
- * And this is the proof the the existence of `liftA2` implies the existence of `<*>`
- */
-
-export function app_another<A, B>(pf: Maybe<(a:A) => B>, pa: Maybe<A>): Maybe<B> {
-    /**
-     * liftA2 implemented using only <*> the alternative applicable definition
-     * 
-     * @TODO NOTE: something wrong must test
-     */
+export function app_another<A, B>(pf: Type<(a:A) => B>, pa: Type<A>): Type<B> {
+    
+    //  liftA2 implemented using only <*> the alternative applicable definition
+    //  
+    //  @TODO NOTE: something wrong must test
+    
     const uncurried_id = (f: (x:A) => B, a:A) => f(a)
     const lifted_id = liftA2(uncurried_id)
     return lifted_id(pf, pa)
 }
+*/
+//@markdown_end
+//@ignore_start
 /**
  * tests and demonstrations
  */

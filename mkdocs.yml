@@ -4,6 +4,8 @@ theme:
 nav:
   - Introduction: '01_introduction.md'
   - The Maybe Monad: '02_maybe_monad.md'
-  - Parsing: '02_parsing_intro.md'
-  - Combining Parsers: '03_building_parsers.md'
+  - Parsing: '02_parsing_introduction.md'
   - Ast: '04_ast.md'
+  - Combining Parsers: '03_building_parsers.md'
+  - Functor: functor.md
+  - Monad: monad.md

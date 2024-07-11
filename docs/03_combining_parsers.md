@@ -32,7 +32,7 @@ single digit. Note we have not consumed leading whitespace.
 /**
  * Parse a digit without consuming leading white space
  */ 
-function parseSingleDigit(sinput: string): {maybe_result: Maybe<string>, remaining: string} {
+export function parseSingleDigit(sinput: string): {maybe_result: Maybe<string>, remaining: string} {
     const s = sinput.slice(0)
     if((s.length == 0) || (s.substring(0, 1).match(/[0-9]/g) == null)) {
         return makeParserResult(Maybe.nothing(), sinput)
@@ -51,7 +51,7 @@ a boolean predicate is a very useful tool.
  * Return a parser that parses the next single character in the input if it satisfies 
  * a predicate
  */
-function createPredicateParser(predicate: (ch: string) => boolean): Parser<string> {
+export function createPredicateParser(predicate: (ch: string) => boolean): Parser<string> {
     return function(sinput: string){
         if((sinput.length == 0) || (! predicate(sinput.substring(0,1))))
             return makeParserResult(Maybe.nothing(), sinput)
@@ -84,7 +84,7 @@ This is what I think of as the __one-or-more__ parser.
  * Take a parser for a single character meeting some criteria and return
  * a parser that detects greater than zero consecutive instances of such characters 
 */
-function create_OneOrMoreParser(singleChParser: Parser<string>): Parser<string> {
+export function create_OneOrMoreParser(singleChParser: Parser<string>): Parser<string> {
     return function manyTimes(sinput: string): ParserResult<string> {
         let s = sinput.slice(0)
         const {maybe_result: v1, remaining: r1} = singleChParser(s)
@@ -114,7 +114,7 @@ used more of the `Monad` properties of the `Maybe Monad`. We will come back to t
 The one-or-more constructor makes parsing numbers (a string consisting only of digits) easy. As below.
  
 ```ts
-function parseNumber(sinput: string): ParserResult<string> {
+export function parseNumber(sinput: string): ParserResult<string> {
     const digitParser = createPredicateParser((ss: string) => (ss.substring(0, 1).match(/[0-9]/g) !== null))
     const numParser = create_OneOrMoreParser(digitParser)
     const r = numParser(sinput)
@@ -148,13 +148,15 @@ We will chose to eliminate whitespace.
 Next we demonstrate how to transform any parser into a parser that ignores leading whitespace.
  
 ```ts
-function isWhitespaceChar(ch: string) {return (ch.substring(0,1).match(/[\s]/g) !== null)}
+function isWhitespaceChar(ch: string) {return (ch.length > 0) && (ch.substring(0,1).match(/[\s]/g) !== null)}
 const oneWhitespaceCharParser = createPredicateParser(isWhitespaceChar)
 const whitespaceParser = create_OneOrMoreParser(oneWhitespaceCharParser)
-function stripLeadingWhitespace(sinput: string): string {
+export function stripLeadingWhitespace(sinput: string): string {
+    if(sinput.length === 0)
+        return sinput
     let tmp = sinput.slice(0)
     while(true) {
-        if(isWhitespaceChar(tmp[0])) {
+        if(isWhitespaceChar(tmp[0]) && tmp.length > 1) {
             tmp = tmp.slice(1)
         } else {
             break
@@ -173,7 +175,7 @@ Here is a function that converts that parser `p` to a new parser that strips whi
 string.
  
 ```ts
-function whitespaceIfy<T>(p: Parser<T>): Parser<T> {
+export function whitespaceIfy<T>(p: Parser<T>): Parser<T> {
     return function(sinput: string): ParserResult<T> {
         return p(stripLeadingWhitespace(sinput))
     }
@@ -217,7 +219,7 @@ Infact this is a general construct. Given two parsers:
 We can get a `p1_OR_p2` parser as follows:
  
 ```ts
-function OR_parser<T,R>(p1: Parser<T>,  p2: Parser<R>): Parser<T|R> {
+export function parser_or<T,R>(p1: Parser<T>,  p2: Parser<R>): Parser<T|R> {
     return function(sinput: string): ParserResult<T|R> {
         const {maybe_result:v1, remaining:r1} = p1(sinput)
         if(Maybe.isNothing(v1)) {
@@ -299,6 +301,50 @@ function followedBy<T, U>(p1: Parser<T>, p2: Parser<U>): Parser<[T,U]> {
 }
 ```
  
+When we come to parsing arithmetic expressions we will be faced with the following situation where we need to 
+combine 3 separate parsers in sequence.
+
+For example sometimes an arithmetic expression is of the form `expression1 * expression2` such as `(2+5) * (6+5)`.
+
+In this situation we need to parse `expression1` the multiply sign `*` and `expression2` and combine the parsed results
+into a new `expression`. 
+
+There are other exaples of
+analogous situations.
+
+What we need is a `followBy` function such as 
+
+```ts
+function followBy3<T,U>(p1: Parser<T>, p2: Parser<U>, p3: Parser<T>, f:(x:[T,U,T]) => T)`
+```
+ Here is the definition of such a function.
+ 
+```ts
+export function followedBy3<R,S,T,U>(pr: Parser<R>, ps: Parser<S>, pt: Parser<T>, f:(r: R, s:S, t:T) => U):Parser<U> {
+    return function(sinput: string): ParserResult<U> {
+        const {maybe_result: rv, remaining: rem1} = pr(sinput)
+        if(Maybe.isNothing(rv)) {
+            return makeParserResult(Maybe.nothing(), rem1)
+        }
+        const rval = Maybe.getValue(rv)
+        const {maybe_result: sv, remaining: rem2} = ps(rem1)
+        if(Maybe.isNothing(sv)) {
+            return makeParserResult(Maybe.nothing(), sinput)
+        }
+        const sval = Maybe.getValue(sv)
+        const {maybe_result: tv, remaining: rem3} = pt(rem2)
+        if(Maybe.isNothing(tv)) {
+            return makeParserResult(Maybe.nothing(), sinput)
+        }
+        const tval = Maybe.getValue(tv)
+
+        return makeParserResult(Maybe.just(f(rval, sval, tval)), rem3)
+    } 
+}
+```
+ 
+*/
+/*
 Remembering that `Parser<T> = (sinput: string) => Maybe<PP<T>>` we can generalize `followedBy` from a binary operation to an
 array operation. Such that a list of parsers can be applied one after the other.
  
