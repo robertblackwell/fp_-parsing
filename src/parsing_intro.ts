@@ -306,6 +306,7 @@ We can get a `p1_OR_p2` parser as follows:
 */
 //@markdown_end
 //@code_start
+export const choice = parser_or
 export function parser_or<T,R>(p1: Parser<T>,  p2: Parser<R>): Parser<T|R> {
     return function(sinput: string): ParserResult<T|R> {
         const {maybe_result:v1, remaining:r1} = p1(sinput)
@@ -465,7 +466,7 @@ array operation. Such that a list of parsers can be applied one after the other.
 /**
  * Lets test some of the above functions
  */
-function assert_parser_result<T>(pr: ParserResult<T>, value: Maybe<T>, remainder: string) {
+function assert_parser_result<T>(pr: ParserResult<T>, value: Maybe.Type<T>, remainder: string) {
     const {maybe_result, remaining} = pr
     if(remainder !== remaining) {
         console.log(`assert_parser_result failed remaining: ${remaining} does not equal ${remainder}`)

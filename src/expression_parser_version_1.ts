@@ -20,7 +20,7 @@ import {
     whitespaceIfy, 
     createPredicateParser,
 } from "../src/parsing_intro"
-import {Maybe} from "../src/maybe_v1"
+import * as Maybe from "../src/maybe_v1"
 
 type TNode = Tree.TreeNode
 //@code_end
@@ -40,7 +40,7 @@ Notice there are 2 implementations of the function `term_plus_expression`
 //@code_start
 function expression(sinput: string): ParserResult<TNode> {
     const s = removeLeadingWhitespace(sinput)
-    const r = parser_or([term_plus_expression_1, term_only], s)
+    const r = choice([term_plus_expression_1, term_only], s)
     return r
 }
 function term_plus_expression_1(sinput: string): ParserResult<TNode> {
@@ -92,7 +92,7 @@ Again notice that there are 2 implementations of `factor_times_term
 //@markdown_end
 //@code_start
 function term(sinput: string): ParserResult<TNode> {
-    const rr = parser_or([factor_times_term_1, factor_only], sinput)
+    const rr = choice([factor_times_term_1, factor_only], sinput)
     return rr
 }
 function factor_times_term_1(sinput: string): ParserResult<TNode> {
@@ -139,7 +139,7 @@ function factor_only(sinput: string): ParserResult<TNode> {
 //@code_start
 function factor(sinput: string): ParserResult<TNode> {
     const s = removeLeadingWhitespace(sinput)
-    return parser_or([parseNumberExp, parseBracketExp], s)
+    return choice([parseNumberExp, parseBracketExp], s)
 }
 function parseBracketExp(sinput: string): ParserResult<TNode> {
     const s = removeLeadingWhitespace(sinput)
@@ -195,6 +195,7 @@ function removeLeadingWhitespace(s: string): string {
 /** 
  * Alternative - try each parser in order, on the original input, and return the result of the first that succeeds
 */
+const choice = parser_or
 function parser_or(ps: Array<Parser<TNode>>, input: string): ParserResult<TNode> {
     if(ps.length == 0) {
         return makeParserResult(Maybe.nothing(), input)

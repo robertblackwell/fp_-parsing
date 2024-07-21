@@ -66,15 +66,46 @@ a reference if things get confusing.
 ## Notation for this document
 
 - Objects are uppercase. This is consistent with Typescript general usage.
+
 - `A -> B` means a specific arrow from `A` to `B`. 
-- `A => B` is the type of arrows from `A` to `B`. Typescript will often insist that I write is `(a:A)=>B`. When a discussion is mainly Category Theoretic I might use `[A, B]` for `A=>B`.
+
+- `A => B` is the type of arrows from `A` to `B`. 
+
 - Functors, Applicatives, Monads are always represented by uppercase letters or a name starting with an uppercase letter, such as `Maybe`.
-- Functor application will uses angle brackets `F<A>` (or a Haskell like convention of `F A`) is the functor `F` applied to the object `A`. This is a Typescript requirement.
-We might occasionally slip and write `F<A->B>` when we mean `fmap<A->B>`.
-- We will generally write `A x B` as the type of pairs of `[A, B]` except when Typescript insists on using the second notation.
-- A function that takes `n` arguments is not the same as a function that takes a single `n-tuple`. Nor is it the same as the function 
-resulting from full or partial `currying`. These are __equivalent__ (meaning there is an isomorphism that maps one to the other 
-and back again) but not the same. Typescript also insists on this differentiation. 
+
+- Functor application will generally use angle brackets `F<A>`to mean the functor `F` applied to the object `A`. This is a Typescript requirement. However in general discussion and when the meaning is clear I will use a Haskell style convention of `F A`.
+
+- I might occasionally slip and write `F<A->B>` when we mean `fmap<A->B>`.
+
+- We will generally write `[A, B]` as the type of pairs or 2-tuple of `A`, and `B`. This is what a Category Theorist would usually write as `A x B`. 
+The tuple notation is further confusing because in CT notation `[A, B]` often means what we are calling `A => B`. 
+
+- A function that takes `n` arguments is the same as a function that takes a single `n-tuple`. Hence a function of
+two arguments `A` and `B` with a result of `C` has a type `[A, B] => C`
+
+- The function related by full or partial `currying` are __NOT__ the same function. These are __equivalent__ (meaning there is an isomorphism that maps one to the other 
+and back again) but not the same. Typescript also insists on this differentiation. In CT currying is represented by the following isomorphism.
+
+```ts
+    curry: ([A, B] => C) => (A => [B, C])
+    curry(f)(a): [B, C]
+    curry(f)(a)(b) = f(a,b) 
+```
+
+## Taking liberties with Typescript notation
+
+Just to emphasis the point made above about function types.
+
+When describing the __type__ of of a TS function in a context where the code snippet does not have to be compiled
+I will often replace `((a: A)) => B` with simply `A => B`. That is the function that takes and `a:A` and returns 
+a value of `B` will be shortened to `A => B`.
+
+Thus if I write `f: A => B` this should be interpretted as `f` takes a value of type `A` and returns a 
+value of type `B` and in strict Typescript would be written as:
+
+```ts
+const f: (a:A) => B
+```
 
 ## Two code solutions
 

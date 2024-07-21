@@ -6,7 +6,7 @@
 This version has been expanded to contain all the __Monad__ functions.
 
 Wraps a T value or is null - so we have Nullable<T>. 
-We could then do the standard TS thiing and check for null before using a Maybe value.
+We could then do the standard TS thing and check for null before using a Maybe value.
 However I wanted the Maybe Monad to be more overtly visible than that approach would have yielded.
 */
 //@markdown_end
