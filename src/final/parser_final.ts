@@ -2,7 +2,6 @@ import * as Tree from "../tree"
 import {Ast, ParserResultAst} from "../ast_functions"
 import * as PM from "../parser_monad" 
 import * as PA from "../parser_applicative"
-import {ParserType} from "../parser_type"
 import * as PC from "./combiners"
 import { 
     createPredicateParser, 

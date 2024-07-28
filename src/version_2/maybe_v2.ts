@@ -3,7 +3,20 @@
 /*
 # Maybe Monad - Version 2
 
-This version has been expanded to contain all the __Monad__ functions.
+This version has been expanded to contain all the __Monad__ functions and an additional
+one called `choice`.
+
+One of the things to notice about much of the work below is that once `eta` and `mu`
+are defined many of the other functions do not depend on the specific nature of the
+`Maybe` functor but are general derivations from the existence and attributes of `eta` and `mu`.
+
+This is also true of the derivation of the `apply` function which demonstrates that a `Monad`
+is also an applicative functor.
+
+Finally the definition of the `chocie` function which is specific to the `Maybe` Monad
+demonstrates that `Maybe` is an `Alternative` functor.
+
+## Maybe - type definition
 
 Wraps a T value or is null - so we have Nullable<T>. 
 We could then do the standard TS thing and check for null before using a Maybe value.
@@ -85,9 +98,9 @@ export function bind<T,S>(x: Type<T>, f: (t:T) => Type<S>): Type<S> {
 }
 /**
  * This is the Haskell `<*>` operation and is part of the proof that every Monad
- * is an applicative
+ * is an Applicative
  */
-export function app<A, B>(pf: Type<(a:A) => B>, pa: Type<A>): Type<B> {
+export function apply<A, B>(pf: Type<(a:A) => B>, pa: Type<A>): Type<B> {
     const h = (pa: Type<A>) => {
         const g = (f: (a:A) => B) => {
             const return_fab = (x:A) => eta(f(x))
@@ -106,7 +119,7 @@ export function kliesliA2<A, B, C>(f: (a: A, b: B) => C): (x: Type<A>, y: Type<B
     const curriedf = (a:A) =>{return (b:B) => f(a,b)}    
     const fmap_curriedf = fmap((curriedf))
     const lifted_f = (pa: Type<A>, pb: Type<B>) => {
-        return app(fmap_curriedf(pa), pb)
+        return apply(fmap_curriedf(pa), pb)
     }
     return lifted_f
 }

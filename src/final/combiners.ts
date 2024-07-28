@@ -6,14 +6,14 @@ import {
     make_result, make_failed, 
     ast_remain, ast_value} from "../ast_functions"
 import * as AST from "../ast_functions"
-import * as PP from "../parser_pair"
-import * as PR from "../parser_result"
-import * as PT from "../parser_type"
+// import * as PP from "../parser_pair"
+// import * as PR from "../parser_result"
+// import * as PT from "../parser_type"
 import * as APP from "../parser_applicative"
 import * as PM from "../parser_monad"
-import {ParserType} from "../parser_type"
+// import {ParserType} from "../parser_type"
 import {whitespace} from "./primitives"
-type P<T> = ParserType<T>
+type P<T> = PM.Parser<T>
 
 const removeLeadingWhitespace = whitespace
 /**
@@ -203,12 +203,12 @@ export function sequence(ps: Array<ParserAst>, sinput: string, combine:(rs:Array
 
 export function sequence2<T>(p1: P<T>, p2: P<T>, combine: (t1: T, t2: T) => T): P<T> {
     const f = (t1: T) => (t2: T) => combine(t1, t2)
-    return APP.ap(APP.ap(APP.pure(f), p1), p2)
+    return APP.ap(APP.ap(PM.pure(f), p1), p2)
 }
 
 export function sequence3<T, S>(p1: P<T>, p2: P<S>, p3: P<T>, combine: (t1: T, t2: S, t3: T) => T): P<T> {
     const f = (t1: T) => (t2: S) => (t3:T) => combine(t1, t2, t3)
-    return APP.ap(APP.ap(APP.ap(APP.pure(f), p1), p2), p3)
+    return APP.ap(APP.ap(APP.ap(PM.pure(f), p1), p2), p3)
 
 }
 /**
@@ -226,35 +226,27 @@ export function sequenceMonadic3<T>(p1: P<T>, p2: P<T>, p3: P<T>, combine:(t1: T
  * -    Applies the argument `p` as many times as possible and returns success 
  *      if at least one application is successful.
  * -    The new parser T[] wrapped in PR.PResult where each element of the value array
- *      is the T value from a single aplication of `p`
+ *      is the T value from a single application of `p`
  */
 export function many<T>(p: P<T>): P<T[]> {
-    function recurse(sinput: string): PP.PPair<Array<T>> {
+    function recurse(sinput: string): PM.ParserResult<T[]> {
         const r = p(sinput)
         if(Maybe.isNothing(r)) {
-            return PP.make([], sinput)
+            return Maybe.nothing()
         } else {
-            const rem = Maybe.get_value(r).remaining_input
-            const v = Maybe.get_value(r).value
-            const recurse_result = recurse(rem)
-            const rem2 = PP.get_remaining_input(recurse_result)
-            const recurse_value = PP.get_value(recurse_result)
-            const combined_value = [v].concat(recurse_value)
-            const y = PP.make(combined_value, rem2)
+            const {result: v1, remaining: rem1} = Maybe.getValue(r)
+            const r2 = recurse(rem1)
+            if(Maybe.isNothing(r2)) {
+                return PM.makeJustParserResult(v1, rem1)
+            }
+            const {result: v2, remaining: rem2} = Maybe.getValue(r2)
+            const combined_value = [v1].concat(v2)
+            const y = PM.makeJustParserResult(combined_value, rem2)
             return y
         }
     }
-    return function (sinput: string): PR.PResult<T[]> {
-        const parse_result = recurse(sinput)
-        const v = 
-        
-        PP.get_value(parse_result)
-        const rem = PP.get_remaining_input(parse_result)
-        if(v.length ==0) {
-            return PR.make_failed()
-        } else {
-            const ret = PR.make(v, rem)
-            return ret
-        }
+    return function (sinput: string): PM.ParserResult<T[]> {
+        const r1 = recurse(sinput)
+        return r1
     }
 }

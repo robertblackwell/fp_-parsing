@@ -1,7 +1,5 @@
-import * as PP from "./parser_pair"
-import * as PR from "./parser_result"
-import * as PT from "./parser_type"
-import * as Maybe from "./maybe"
+import * as PT from "./parser_monad"
+import * as Maybe from "./maybe_v2"
 
 // Haskel definition of a Monad
 // class Monad m where
@@ -26,32 +24,35 @@ import * as Maybe from "./maybe"
  * Below we will demonstrate
  */
 
-export type P<T> = PT.ParserType<T>
+export type P<T> = PT.Parser<T>
 
-function compose<X, Y>(f: (s:string) => X, g: (x:X) => Y): (s:string) => Y {
-    return (s: string) => g(f(s))
-}
+const fmap = PT.fmap
+const eta = PT.eta
+const mu = PT.mu
+const bind = PT.bind
+const kliesli = PT.kliesli
+// function compose<X, Y>(f: (s:string) => X, g: (x:X) => Y): (s:string) => Y {
+//     return (s: string) => g(f(s))
+// }
 
-export function fmap<A,B>(f:(a:A)=>B): (p: P<A>) => P<B> {
-    const f2 = Maybe.fmap(PP.fmap(f))
-    return function k(p: P<A>) {return compose(p, f2)}
-}
+// export function fmap<A,B>(f:(a:A)=>B): (p: P<A>) => P<B> {
+//     const f2 = Maybe.fmap(PP.fmap(f))
+//     return function k(p: P<A>) {return compose(p, f2)}
+// }
 
-/**
- * Define pure pure: T => P<T>
- */
-export function pure<T>(t:T): P<T> {
-    return (s: string) => Maybe.just(PP.make(t, s))
-}
+// /**
+//  * Define pure pure: T => P<T>
+//  */
+// export function pure<T>(t:T): P<T> {
+//     return (s: string) => Maybe.just(PP.make(t, s))
+// }
 function apply<A, B>(a: P<A>, f: P<(a:A) => B>): P<B> {
-    const result = (s: string): PR.PResult<B> => {
+    const result = (s: string): PT.ParserResult<B> => {
         const fs = f(s)
         if(Maybe.isNothing(fs)) {
             return Maybe.nothing()
         } 
-        const just_g_sprime = Maybe.get_value(fs)
-        const g = just_g_sprime.value//PP.first(just_g_sprime)
-        const sprime = just_g_sprime.remaining_input//PP.second(just_g_sprime)
+        const {result: g, remaining: sprime} = Maybe.getValue(fs)
         const pb =fmap(g)(a)(sprime)
         return pb
     } 
@@ -157,22 +158,17 @@ export const ap = ap_impl_naive
  * 
  */
 export function ap_impl_naive<A, B>(f: P<(x:A) => B>, pa: P<A>): P<B> {
-    const pp = (s:string) => {
+    const result = (s: string): PT.ParserResult<B> => {
         const fs = f(s)
         if(Maybe.isNothing(fs)) {
             return Maybe.nothing()
-        } else {
-            const justgsprime = Maybe.get_value(fs)
-            const gg = justgsprime.value//PP.first(justgsprime)
-            const g = justgsprime.value//PP.get_value(justgsprime)
-            const sprime2 = justgsprime.remaining_input//PP.second(justgsprime)
-            const sprime = justgsprime.remaining_input //PP.get_remaining_input(justgsprime)
-            const pb = fmap(g)(pa)(sprime)
-            return pb
-        }
-    }
-    return pp
-} 
+        } 
+        const {result: g, remaining: sprime} = Maybe.getValue(fs)
+        const pb =fmap(g)(a)(sprime)
+        return pb
+    } 
+    return result
+}
 export function ap_impl_monad<A, B>(pf: P<(a:A) => B>, pa: P<A>): P<B> {
     /**
      * liftA2 implemented using monad primitives
@@ -292,20 +288,14 @@ export function liftA2_impl_naive<A, B, C>(f: (a: A, b: B) => C): (x: P<A>, y: P
             if(Maybe.isNothing(g(s))) {
                 return Maybe.nothing()
             } 
-            const gpair = Maybe.get_value(gs)
-            const sprime = gpair.remaining_input//PP.second(gpair)
-            const gv = gpair.value//PP.first(gpair)
-            // breaking gpair into components eg gpair = [gv, sprime]
+            const {result: gv, remaining: sprime} = Maybe.getValue(gs)
             const hs = h(sprime) 
             if(Maybe.isNothing(hs)) {
                 return Maybe.nothing()
             }
-            const hpair = Maybe.get_value(hs)
-            const sdoubleprime = hpair.remaining_input//PP.second(hpair)
-            const hv = hpair.value//PP.first(hpair)
-            // beaking hpair into components eg hpair = [hv, sdoubleprime]
+            const {result: hv, remaining:sdoubleprime} = Maybe.getValue(hs)
             const cval = f(gv, hv)
-            const result = Maybe.just(PP.make(cval, sdoubleprime))
+            const result = PT.makeJustParserResult(cval, sdoubleprime)
             return result
         }
         return r
@@ -332,10 +322,6 @@ export function liftA2_impl_monad<A, B, C>(f: (a: A, b: B) => C): (x: P<A>, y: P
     return r
 }
 
-export function eta<A>(a: A): P<A> {
-    return pure(a)
-}
-
 /**
  * Our parse type constructor is a Monad
  * 
@@ -346,37 +332,35 @@ export function eta<A>(a: A): P<A> {
  * Lets have a go.
  */
 
-export function mu<A>(f: P<P<A>>): P<A> {
-    const rr = (s: string) => {
-        const fs = f(s)
-        if(Maybe.isNothing(fs))
-            return Maybe.nothing()
-        else {
-            const ftuple = Maybe.get_value(fs)
-            const fv = PP.get_value(ftuple)
-            const fstr = PP.get_remaining_input(ftuple)
-            const r = fv(fstr)
-            return r
-        }
-    }
-    return rr
-}
+// export function mu<A>(f: P<P<A>>): P<A> {
+//     const rr = (s: string) => {
+//         const fs = f(s)
+//         if(Maybe.isNothing(fs))
+//             return Maybe.nothing()
+//         else {
+//             const {result: fv, remaining: fstr} = Maybe.getValue(fs)
+//             const r = fv(fstr)
+//             return r
+//         }
+//     }
+//     return rr
+// }
 
-export function kliesli<A,B>(f:(a: A) => P<B>): (pa: P<A>) => P<B> {
-    const r1 = fmap(f)
-    const result_function = (x:P<A>): P<B> => {
-        const z1 = fmap(f)(x)
-        const z2 = mu(z1)
-        return z2
-    }
-    return result_function
-}
+// export function kliesli<A,B>(f:(a: A) => P<B>): (pa: P<A>) => P<B> {
+//     const r1 = fmap(f)
+//     const result_function = (x:P<A>): P<B> => {
+//         const z1 = fmap(f)(x)
+//         const z2 = mu(z1)
+//         return z2
+//     }
+//     return result_function
+// }
 
-/**
- * This is the haskell function 
- * (>>=) :: m a -> (a -> m b) -> m b
- */
-export function bind<A,B>(pa: P<A>, f:(a:A) => P<B>) {
-    return kliesli(f)(pa)
-}
+// /**
+//  * This is the haskell function 
+//  * (>>=) :: m a -> (a -> m b) -> m b
+//  */
+// export function bind<A,B>(pa: P<A>, f:(a:A) => P<B>) {
+//     return kliesli(f)(pa)
+// }
 

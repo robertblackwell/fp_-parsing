@@ -1,9 +1,9 @@
 //@file_start maybe_v2.md
 //@ignore_start
-import * as PP from "./parser_pair"
-import * as PR from "./parser_result"
-import * as PT from "./parser_type"
-import * as Maybe from "./maybe"
+// import * as PP from "./parser_pair"
+// import * as PR from "./parser_result"
+// import * as PT from "./parser_type"
+import * as Maybe from "./maybe_v2"
 //@ignore_end
 //@markdown_start
 /*
@@ -24,6 +24,21 @@ mfab <*> ma  =  do { fab <- mfab ; a <- ma ; return (fab a) }
 */
 //@markdown_end
 //@code_start
+export type PReturnObj<T> = {result:T, remaining:string}
+export type ParserResult<T> = Maybe.Type<PReturnObj<T>>
+
+/**
+ * May have to change the definition of ParserResult
+export type PR<T> = Maybe<[T, string]> 
+*/
+export function makeJustParserResult<T>(r: T, rem: string) {
+    return Maybe.just({result: r, remaining: rem})
+}
+export function makeNothingParserResult<T>() {
+    return Maybe.nothing()
+}
+export type Parser<T> = (sinput: string) => ParserResult<T>
+
 function compose<X, Y>(f: (s:string) => X, g: (x:X) => Y): (s:string) => Y {
     return (s: string) => g(f(s))
 }
@@ -37,24 +52,31 @@ function compose<X, Y>(f: (s:string) => X, g: (x:X) => Y): (s:string) => Y {
 /**
  * ## Parsers as a functor
  */
-export type P<T> = PT.ParserType<T>
+export type P<T> = Parser<T>
 
 export function fmap<A,B>(f:(a:A)=>B): (p: P<A>) => P<B> {
-    const f2 = Maybe.fmap(PP.fmap(f))
-    return function k(p: P<A>) {return compose(p, f2)}
+    return function(p:P<A>): P<B> {
+        return function(s:string): ParserResult<B> {
+            const r1 = p(s)
+            if(Maybe.isNothing(r1)) {
+                return Maybe.nothing()
+            }
+            const {result: res1, remaining: rem1} = Maybe.getValue(r1)
+            return makeJustParserResult(f(res1), rem1)
+        }
+    }
 }
-
 /**
  * ## Parsers as a Monad
  * 
  * Step 1 define `eta` and `mu`
  */
-export function pure<T>(t:T): P<T> {
-    return (s: string) => Maybe.just(PP.make(t, s))
+export function eta<T>(t:T): P<T> {
+    return (s: string) => makeJustParserResult(t, s)
 }
 
-export function eta<A>(a: A): P<A> {
-    return pure(a)
+export function pure<A>(a: A): P<A> {
+    return eta(a)
 }
 
 /**
@@ -68,16 +90,15 @@ export function eta<A>(a: A): P<A> {
  */
 
 export function mu<A>(f: P<P<A>>): P<A> {
-    const rr = (s: string) => {
-        const fs = f(s)
+    const rr = function(s: string):ParserResult<A> {
+        const fs: ParserResult<Parser<A>> = f(s)
         if(Maybe.isNothing(fs))
-            return Maybe.nothing()
+            return Maybe.nothing<PReturnObj<A>>()
         else {
-            const ftuple = Maybe.get_value(fs)
-            const fv = PP.get_value(ftuple)
-            const fstr = PP.get_remaining_input(ftuple)
-            const r = fv(fstr)
-            return r
+            const {result: fv, remaining: fstr}: PReturnObj<Parser<A>> = Maybe.getValue(fs)
+            const rr: ParserResult<A> = fv(fstr)
+            // const r = Maybe.just(fv(fstr))
+            return rr
         }
     }
     return rr
@@ -153,6 +174,22 @@ export function liftM2<A,B,C>(pa: P<A>, pb: P<B>, f:(a:A, b:B) => C): P<C> {
 export function liftM3<A,B,C, D>(pa: P<A>, pb: P<B>, pc: P<C>, f:(a:A, b:B, c: C) => D): P<D> {
     const eta_f = (a: A, b: B, c: C) => {return eta(f(a, b, c))}
     return bindM3(pa, pb, pc, eta_f)
+}
+/**
+ * I need to make an abbreviation F<A,B> as if I put this type 'inline' in the arguments for `ap`
+ * I get squiggly lines - guess the language server for TS cannot handle it.
+ * 
+ * Note that `function apply()` is `liftM2` applied to the function
+ * 
+ * [A=>B, A] => B defined as ([f,a]) => f(a)
+ * 
+ * In the following I have given an explicit formular for that calculation
+ */
+
+type F<A,B> = (a:A) => B
+export function apply<A,B>(f: P<F<A,B>>, x:P<A>): P<B> {
+    const res = bind(f, (h) => bind(x, (a) => eta(h(a))))
+    return res
 }
 /**
  * This function implements the "|" operator in a BNF notation.

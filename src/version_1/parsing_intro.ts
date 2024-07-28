@@ -53,14 +53,18 @@ of the Maybe monad.
 //@code_start
 import * as Maybe from './maybe_v1'
 
-export type ParserResult<T> = {maybe_result: Maybe.Type<T>, remaining: string}
+// export type ParserResult<T> = {maybe_result: Maybe.Type<T>, remaining: string}
+export type ParserResult<T> = Maybe.Type<{result: T, remaining: string}>
 /**May have to change the definition of ParserResult
 export type PR<T> = Maybe<[T, string]> 
 */
-export function makeParserResult<T>(r: Maybe.Type<T>, rem: string) {
-    return {maybe_result: r, remaining: rem}
+export function makeJustParserResult<T>(r: T, rem: string) {
+    return Maybe.just({result: r, remaining: rem})
 }
-export type Parser<T> = (sinput: string) => {maybe_result: Maybe.Type<T>, remaining: string}
+export function makeNothingParserResult<T>() {
+    return Maybe.nothing()
+}
+export type Parser<T> = (sinput: string) => ParserResult<T>
 //@code_end
 //@file_end
 //@file_start 03_combining_parsers.md
@@ -85,10 +89,10 @@ whether or not preceeded by whitespace.
  */
 function parseAnyChar(sinput: string): ParserResult<string> {
     if(sinput.length ==0)
-        return {maybe_result: Maybe.nothing(), remaining: sinput}
+        return Maybe.nothing()
     const value = sinput.substring(0,1)
     const remainder = sinput.slice(1)
-    return {maybe_result: Maybe.just(value), remaining: remainder}
+    return Maybe.just({result: value, remaining: remainder})
 }
 //@code_end
 //@markdown_start
@@ -104,11 +108,11 @@ single digit. Note we have not consumed leading whitespace.
 export function parseSingleDigit(sinput: string): ParserResult<string>  {
     const s = sinput.slice(0)
     if((s.length == 0) || (s.substring(0, 1).match(/[0-9]/g) == null)) {
-        return makeParserResult(Maybe.nothing(), sinput)
+        return Maybe.nothing()
     }
     const value = s.substring(0,1)
     const remainder = s.slice(1)
-    return makeParserResult(Maybe.just(value), remainder)
+    return makeJustParserResult(value, remainder)
 }
 //@code_end
 //@markdown_start
@@ -125,10 +129,10 @@ a boolean predicate is a very useful tool.
 export function createPredicateParser(predicate: (ch: string) => boolean): Parser<string> {
     return function(sinput: string){
         if((sinput.length == 0) || (! predicate(sinput.substring(0,1))))
-            return makeParserResult(Maybe.nothing(), sinput)
+            return Maybe.nothing()
         const value = sinput.substring(0,1)
         const remainder = sinput.slice(1)
-        return makeParserResult(Maybe.just(value), remainder)
+        return makeJustParserResult(value, remainder)
     }
 }
 //@code_end
@@ -162,22 +166,23 @@ This is what I think of as the __one-or-more__ parser.
 export function create_OneOrMoreParser(singleChParser: Parser<string>): Parser<string> {
     return function manyTimes(sinput: string): ParserResult<string> {
         let s = sinput.slice(0)
-        const {maybe_result: v1, remaining: r1} = singleChParser(s)
+        const mr1 = singleChParser(s)
         let parse_result = ""
-        if(Maybe.isNothing(v1)) {
-            return makeParserResult(Maybe.nothing(), r1)
+        if(Maybe.isNothing(mr1)) {
+            return Maybe.nothing()
         } else {
             // const pair = Maybe.get_value(r)
-            const first_digit_as_string = Maybe.getValue(v1)
+            const {result: first_digit_as_string, remaining: r1} = Maybe.getValue(mr1)
             // const remain = pair.remaining_input
-            const {maybe_result:v2, remaining:r2} = manyTimes(r1)
-            if(Maybe.isNothing(v2)) {
-                return makeParserResult(Maybe.just(first_digit_as_string), r1)
+            const mr2 = manyTimes(r1)
+            if(Maybe.isNothing(mr2)) {
+                return makeJustParserResult(first_digit_as_string, r1)
             }
             // const result_pair = Maybe.get_value(r2)
-            const subsequent_digits_as_string = Maybe.getValue(v2)
+            const {result: subsequent_digits_as_string, remaining: r2} = Maybe.getValue(mr2)
+            // const subsequent_digits_as_string = Maybe.getValue(v2)
             const parse_result_string = first_digit_as_string  + subsequent_digits_as_string
-            return makeParserResult(Maybe.just(parse_result_string), r2) 
+            return makeJustParserResult(parse_result_string, r2) 
         }
     }
 }
@@ -283,16 +288,16 @@ In code this looks like:
 //@markdown_end
 //@code_start
 function parseNumberOrUppercaseWord(sinput: string): ParserResult<string> {
-    const {maybe_result, remaining} = parseNumber(sinput)
-    if(Maybe.isNothing(maybe_result)) {
-        const {maybe_result:v, remaining:rem} = parseUppercaseWord(sinput)
-        if(Maybe.isNothing(v))
-            return makeParserResult(Maybe.nothing<string>(), remaining)
-        const numbstr = Maybe.getValue(v)
-        return makeParserResult(Maybe.just<string>(numbstr), rem)
+    const res1 = parseNumber(sinput)
+    if(Maybe.isNothing(res1)) {
+        const res2 = parseUppercaseWord(sinput)
+        if(Maybe.isNothing(res2))
+            return Maybe.nothing()
+        const {result:numbstr, remaining:rem} = Maybe.getValue(res2)
+        return makeJustParserResult(numbstr, rem)
     }
-    const s: string = Maybe.getValue(maybe_result)
-    return makeParserResult(Maybe.just<string>(s), remaining)
+    const {result, remaining} = Maybe.getValue(res1)
+    return makeJustParserResult(result, remaining)
 }
 //@code_end
 //@markdown_start
@@ -309,18 +314,18 @@ We can get a `p1_OR_p2` parser as follows:
 export const choice = parser_or
 export function parser_or<T,R>(p1: Parser<T>,  p2: Parser<R>): Parser<T|R> {
     return function(sinput: string): ParserResult<T|R> {
-        const {maybe_result:v1, remaining:r1} = p1(sinput)
-        if(Maybe.isNothing(v1)) {
-            const {maybe_result:v2, remaining:r2} = p2(sinput)
-            if(Maybe.isNothing(v2))
-                return makeParserResult(Maybe.nothing<T|R>(), r2)
+        const res1 = p1(sinput)
+        if(Maybe.isNothing(res1)) {
+            const res2 = p2(sinput)
+            if(Maybe.isNothing(res2))
+                return Maybe.nothing()
             else {
-                const vv = Maybe.getValue(v2)
-                return makeParserResult(Maybe.just<T|R>(vv), r2)
+                const {result:v2, remaining:r2}  = Maybe.getValue(res2)
+                return makeJustParserResult((v2), r2)
             }
         }
-        const tvalue = Maybe.getValue(v1)
-        return makeParserResult(Maybe.just<T|R>(tvalue), r1)
+        const {result:v1, remaining:r1} = Maybe.getValue(res1)
+        return makeJustParserResult((v1), r1)
     }
 }
 //@code_end
@@ -361,17 +366,17 @@ as described above.
 //@markdown_end
 //@code_start
 function parseVariableName(sinput: string): ParserResult<string> {
-    const {maybe_result:v1, remaining:r1} = firstCharParser(sinput)
-    if(Maybe.isNothing(v1)) {
-        return makeParserResult(Maybe.nothing(), r1)
+    const res1 = firstCharParser(sinput)
+    if(Maybe.isNothing(res1)) {
+        return Maybe.nothing()
     }
-    const first_char = Maybe.getValue(v1)
-    const {maybe_result: v2, remaining:r2} = subsequentCharsParser(r1)
-    if(Maybe.isNothing(v2)) {
-        return makeParserResult(Maybe.nothing(), sinput)
+    const {result: first_char, remaining:rem1} = Maybe.getValue(res1)
+    const res2 = subsequentCharsParser(rem1)
+    if(Maybe.isNothing(res2)) {
+        return Maybe.nothing()
     }
-    const subsequent_chars = Maybe.getValue(v2)
-    return makeParserResult(Maybe.just(first_char + subsequent_chars), r2)
+    const {result: subsequent_chars, remaining:rem2} = Maybe.getValue(res2)
+    return makeJustParserResult((first_char + subsequent_chars), rem2)
 }
 //@code_end
 //@markdown_start
@@ -382,17 +387,17 @@ Again this can be generalized as:
 //@code_start
 function followedBy<T, U>(p1: Parser<T>, p2: Parser<U>): Parser<[T,U]> {
     return function(sinput: string) {
-        const {maybe_result: v1, remaining: r1} = p1(sinput)
-        if(Maybe.isNothing(v1)) {
-            return makeParserResult(Maybe.nothing(), r1)
+        const res1 = p1(sinput)
+        if(Maybe.isNothing(res1)) {
+            return Maybe.nothing()
         }
-        const t1 = Maybe.getValue(v1)
-        const {maybe_result: v2, remaining: r2} = p2(r1)
-        if(Maybe.isNothing(v2)) {
-            return makeParserResult(Maybe.nothing(), sinput)
+        const {result: v1, remaining: rem1} = Maybe.getValue(res1)
+        const res2 = p2(rem1)
+        if(Maybe.isNothing(res2)) {
+            return Maybe.nothing()
         }
-        const u1 = Maybe.getValue(v2)
-        return makeParserResult(Maybe.just([t1, u1]), r2)
+        const {result: v2, remaining: rem2} = Maybe.getValue(res2)
+        return makeJustParserResult([v1, v2], rem2)
     }
 }
 //@code_end
@@ -420,23 +425,23 @@ function followBy3<T,U>(p1: Parser<T>, p2: Parser<U>, p3: Parser<T>, f:(x:[T,U,T
 //@code_start
 export function followedBy3<R,S,T,U>(pr: Parser<R>, ps: Parser<S>, pt: Parser<T>, f:(r: R, s:S, t:T) => U):Parser<U> {
     return function(sinput: string): ParserResult<U> {
-        const {maybe_result: rv, remaining: rem1} = pr(sinput)
-        if(Maybe.isNothing(rv)) {
-            return makeParserResult(Maybe.nothing(), rem1)
+        const res1 = pr(sinput)
+        if(Maybe.isNothing(res1)) {
+            return Maybe.nothing()
         }
-        const rval = Maybe.getValue(rv)
-        const {maybe_result: sv, remaining: rem2} = ps(rem1)
-        if(Maybe.isNothing(sv)) {
-            return makeParserResult(Maybe.nothing(), sinput)
+        const {result: rv, remaining: rem1} = Maybe.getValue(res1)
+        const res2 = ps(rem1)
+        if(Maybe.isNothing(res2)) {
+            return Maybe.nothing()
         }
-        const sval = Maybe.getValue(sv)
-        const {maybe_result: tv, remaining: rem3} = pt(rem2)
-        if(Maybe.isNothing(tv)) {
-            return makeParserResult(Maybe.nothing(), sinput)
+        const {result: sv, remaining: rem2} = Maybe.getValue(res2)
+        const res3 = pt(rem2)
+        if(Maybe.isNothing(res3)) {
+            return Maybe.nothing()
         }
-        const tval = Maybe.getValue(tv)
+        const {result: tv, remaining: rem3} = Maybe.getValue(res3)
 
-        return makeParserResult(Maybe.just(f(rval, sval, tval)), rem3)
+        return makeJustParserResult(f(rv, sv, tv), rem3)
     } 
 }
 //@code_end
@@ -466,36 +471,36 @@ array operation. Such that a list of parsers can be applied one after the other.
 /**
  * Lets test some of the above functions
  */
-function assert_parser_result<T>(pr: ParserResult<T>, value: Maybe.Type<T>, remainder: string) {
-    const {maybe_result, remaining} = pr
-    if(remainder !== remaining) {
-        console.log(`assert_parser_result failed remaining: ${remaining} does not equal ${remainder}`)
-    }
-    if( ((!Maybe.isNothing(maybe_result)) && Maybe.isNothing(value)) || ((Maybe.isNothing(maybe_result)) && (!Maybe.isNothing(value)))){
+function assert_parser_result<T>(pr: ParserResult<T>, expected: Maybe.Type<[T, string]>) {
+
+    if( ((!Maybe.isNothing(pr) && Maybe.isNothing(expected)) || ((Maybe.isNothing(pr)) && (!Maybe.isNothing(expected))))){
         console.log(`assert_parser_result failed one value is nothing and the other is not`)
     }
-    if((!Maybe.isNothing(maybe_result)) && (!Maybe.isNothing(value))) {
-        const v1 = Maybe.getValue(maybe_result)
-        const v2 = Maybe.getValue(value)
+    if((!Maybe.isNothing(pr)) && (!Maybe.isNothing(expected))) {
+        const {result:v1, remaining:rem1} = Maybe.getValue(pr)
+        const [v2, rem2] = Maybe.getValue(expected)
         if(v1 !== v2) {
             console.log(`assert_parser_result v1:${v1} !== v2:${v2}`)
+        }
+        if(rem1 !== rem2)  {
+            console.log(`assert_parser_result rem1:${rem1} !== rem2:${rem2}`)
         }
     } 
 }
 function test_number() {
-    assert_parser_result(parseNumber("12345ABCDEF"), Maybe.just("12345"), "ABCDEF")
-    assert_parser_result(parseNumber(" 12345ABCDEF"), Maybe.nothing(), " 12345ABCDEF")
+    assert_parser_result(parseNumber("12345ABCDEF"), Maybe.just(["12345", "ABCDEF"]))
+    assert_parser_result(parseNumber(" 12345ABCDEF"), Maybe.nothing())
     console.log("test_number done")
 }
 function test_number_or_word() {
-    assert_parser_result(parseNumberOrUppercaseWord("12345ABCDEF"), Maybe.just("12345"), "ABCDEF")
-    assert_parser_result(parseNumberOrUppercaseWord("ABCDEF12345"), Maybe.just("ABCDEF"), "12345")
+    assert_parser_result(parseNumberOrUppercaseWord("12345ABCDEF"), Maybe.just(["12345", "ABCDEF"]))
+    assert_parser_result(parseNumberOrUppercaseWord("ABCDEF12345"), Maybe.just(["ABCDEF", "12345"]))
     console.log("test_number_or_word done")
 }
 function test_variable_name() {
-    assert_parser_result(parseVariableName("athing_12345-xyz"), Maybe.just("athing_12345"), "-xyz")
-    assert_parser_result(parseVariableName("_athing_12345-xyz"), Maybe.just("_athing_12345"), "-xyz")
-    assert_parser_result(parseVariableName("1athing_12345-xyz"), Maybe.nothing(), "1athing_12345-xyz")
+    assert_parser_result(parseVariableName("athing_12345-xyz"), Maybe.just(["athing_12345", "-xyz"]))
+    assert_parser_result(parseVariableName("_athing_12345-xyz"), Maybe.just(["_athing_12345", "-xyz"]))
+    assert_parser_result(parseVariableName("1athing_12345-xyz"), Maybe.nothing())
     console.log("test_variable_name done")
 }
 function test_main() {
