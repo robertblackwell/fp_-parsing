@@ -67,28 +67,14 @@ function parser_or_N(ps: Array<Parser<Ast>>, input: string): ParserResult<Ast> {
     const {result: r1, remaining: rem1} = Maybe.getValue(res1)
     return makeJustParserResult((r1), rem1)
 }
-export function followedBy3<R,S,T,U>(pr: Parser<R>, ps: Parser<S>, pt: Parser<T>, f:(r: R, s:S, t:T) => U):Parser<U> {
-    // const ff = (x: R, y: S, z: T) => PM.eta(f(x,y,z))
-    return PM.bindM3(pr, ps, pt, (x: R, y: S, z: T) => PM.eta(f(x,y,z)))
-    // return function(sinput: string): ParserResult<U> {
-    //     const res1 = pr(sinput)
-    //     if(Maybe.isNothing(res1)) {
-    //         return Maybe.nothing()
-    //     }
-    //     const {result: rv, remaining: rem1} = Maybe.getValue(res1)
-    //     const res2 = ps(rem1)
-    //     if(Maybe.isNothing(res2)) {
-    //         return Maybe.nothing()
-    //     }
-    //     const {result: sv, remaining: rem2} = Maybe.getValue(res2)
-    //     const res3 = pt(rem2)
-    //     if(Maybe.isNothing(res3)) {
-    //         return Maybe.nothing()
-    //     }
-    //     const {result: tv, remaining: rem3} = Maybe.getValue(res3)
+export function followedBy<T, U>(p1: Parser<T>, p2: Parser<U>): Parser<[T,U]> {
+    return PM.bindM2(p1, p2, (t:T, u:U) => PM.eta([t, u]))
+}
 
-    //     return makeJustParserResult(f(rv, sv, tv), rem3)
-    // } 
+export function followedBy3<R,S,T,U>(pr: Parser<R>, ps: Parser<S>, pt: Parser<T>, f:(r: R, s:S, t:T) => U):Parser<U> {
+    return PM.bind(pr, (r:R) => PM.bind(ps, (s:S) => PM.bind(pt, (t:T) => PM.eta(f(r,s,t)))))
+    // which is the same as
+    // return PM.bindM3(pr, ps, pt, (x: R, y: S, z: T) => PM.eta(f(x,y,z)))
 }
 
 

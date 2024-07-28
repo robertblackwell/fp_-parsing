@@ -74,42 +74,47 @@ export function parseNumber(sinput: string): ParserResult<string> {
     return r
 }
 
-export function followedBy<T, U>(p1: Parser<T>, p2: Parser<U>): Parser<[T,U]> {
-    return function(sinput: string) {
-        const res1 = p1(sinput)
-        if(Maybe.isNothing(res1)) {
-            return Maybe.nothing()
-        }
-        const {result: v1, remaining: rem1}: PReturnObj<T> = Maybe.getValue(res1)
-        const res2 = p2(rem1)
-        if(Maybe.isNothing(res2)) {
-            return Maybe.nothing()
-        }
-        const {result: v2, remaining: rem2}: PReturnObj<U> = Maybe.getValue(res2)
-        return makeJustParserResult([v1, v2], rem2)
-    }
-}
-export function followedBy3<R,S,T,U>(pr: Parser<R>, ps: Parser<S>, pt: Parser<T>, f:(r: R, s:S, t:T) => U):Parser<U> {
-    return function(sinput: string): ParserResult<U> {
-        const res1 = pr(sinput)
-        if(Maybe.isNothing(res1)) {
-            return Maybe.nothing<PReturnObj<U>>()
-        }
-        const {result: rv, remaining: rem1} = Maybe.getValue<PReturnObj<R>>(res1)
-        const res2 = ps(rem1)
-        if(Maybe.isNothing(res2)) {
-            return Maybe.nothing()
-        }
-        const {result: sv, remaining: rem2} = Maybe.getValue<PReturnObj<S>>(res2)
-        const res3 = pt(rem2)
-        if(Maybe.isNothing(res3)) {
-            return Maybe.nothing()
-        }
-        const {result: tv, remaining: rem3} = Maybe.getValue<PReturnObj<T>>(res3)
+// export function followedBy<T, U>(p1: Parser<T>, p2: Parser<U>): Parser<[T,U]> {
+//     function f(t:T, u:U): Parser<[T,U]> {
+//         return PM.eta([t,u])
+//     }
+//     const x = PM.bindM2(p1, p2, f)
+//     return function(sinput: string) {
+//         const res1 = p1(sinput)
+//         if(Maybe.isNothing(res1)) {
+//             return Maybe.nothing()
+//         }
+//         const {result: v1, remaining: rem1}: PReturnObj<T> = Maybe.getValue(res1)
+//         const res2 = p2(rem1)
+//         if(Maybe.isNothing(res2)) {
+//             return Maybe.nothing()
+//         }
+//         const {result: v2, remaining: rem2}: PReturnObj<U> = Maybe.getValue(res2)
+//         return makeJustParserResult([v1, v2], rem2)
+//     }
+// }
+// export function followedBy3<R,S,T,U>(pr: Parser<R>, ps: Parser<S>, pt: Parser<T>, f:(r: R, s:S, t:T) => U):Parser<U> {
+//     const x = PM.bindM3(pr, ps, pt, (r:R, s:S, t:T) => PM.eta(f(r,s,t)))
+//     return function(sinput: string): ParserResult<U> {
+//         const res1 = pr(sinput)
+//         if(Maybe.isNothing(res1)) {
+//             return Maybe.nothing<PReturnObj<U>>()
+//         }
+//         const {result: rv, remaining: rem1} = Maybe.getValue<PReturnObj<R>>(res1)
+//         const res2 = ps(rem1)
+//         if(Maybe.isNothing(res2)) {
+//             return Maybe.nothing()
+//         }
+//         const {result: sv, remaining: rem2} = Maybe.getValue<PReturnObj<S>>(res2)
+//         const res3 = pt(rem2)
+//         if(Maybe.isNothing(res3)) {
+//             return Maybe.nothing()
+//         }
+//         const {result: tv, remaining: rem3} = Maybe.getValue<PReturnObj<T>>(res3)
 
-        return makeJustParserResult(f(rv, sv, tv), rem3)
-    } 
-}
+//         return makeJustParserResult(f(rv, sv, tv), rem3)
+//     } 
+// }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // type StringParser = 

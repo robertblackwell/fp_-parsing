@@ -8,12 +8,12 @@ import {
     makeJustParserResult,
 } from "./parser_monad"
 import {
-    followedBy3, 
     parseNumber, 
     whitespaceIfy, 
     createPredicateParser,
     stripLeadingWhitespace, removeLeadingWhitespace
 } from "./primitives"
+import {followedBy3} from "./combiners"
 import {
     expression, 
     term_plus_expression_1,
