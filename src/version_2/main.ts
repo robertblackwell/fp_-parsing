@@ -6,14 +6,19 @@ import {
     ParserResult, 
     PReturnObj,
     makeJustParserResult,
+    bindM2, bind, eta
 } from "./parser_monad"
 import {
     parseNumber, 
     whitespaceIfy, 
+    choice, choiceN,
+    many, many1,
     createPredicateParser,
-    stripLeadingWhitespace, removeLeadingWhitespace
+    stripLeadingWhitespace, 
+    removeLeadingWhitespace,
+    create_OneOrMoreParser_3,
+    followedBy, followedBy3
 } from "./primitives"
-import {followedBy3} from "./combiners"
 import {
     expression, 
     term_plus_expression_1,
@@ -24,6 +29,25 @@ type TNode = Tree.TreeNode
 /******************************************************************************/
 // Tests 
 /*******************************************************************************/
+// function always<T>(sinput:string):ParserResult<T[]> {
+//     // return Maybe.nothing()
+//     return makeJustParserResult<T[]>([], sinput)
+// }
+// function many<T>(single: Parser<T>): Parser<T[]> {
+//     return function(sinput: string): ParserResult<T[]> {
+//         return choice<T[], T[]>(many1(single), always)(sinput)
+//     }
+// }
+// function many1<T>(single: Parser<T>): Parser<T[]> {
+//     const ms: Parser<T[]> = many(single)
+//     return function(sinput: string)  { 
+//         return bindM2<T, T[], T[]>(single, ms, (t:T, ts: T[]) => {
+//             const x = eta([...[t], ...ts])
+//             return x
+//         })(sinput)
+//     }
+// }
+
     // this is the main module
     function verify_parser_result(actual: ParserResult<TNode>, expected: ParserResult<TNode>) {
         // const {maybe_result: r1, remaining: rem1} = actual
@@ -80,7 +104,25 @@ type TNode = Tree.TreeNode
             )
         )
     }
-
+    function testMany() {
+        const digitParser = createPredicateParser((ss: string) => (ss.substring(0, 1).match(/[0-9]/g) !== null))
+        const z = many(digitParser)
+        const rr = z("12345")
+        if(Maybe.isNothing(rr)) {
+            console.log(["many digits of '12345", "nothing"])
+        } else {
+            const {result: a, remaining:b} = Maybe.getValue(rr)
+            console.log(["many digits of '12345'", a, b])
+        }
+        const z2 = create_OneOrMoreParser_3(digitParser)
+        const rr2 = z2("12345x")
+        if(Maybe.isNothing(rr2)) {
+            console.log(["many digits of '12345", "nothing"])
+        } else {
+            const {result: a, remaining:b} = Maybe.getValue(rr2)
+            console.log(["many digits of '12345'", a, b])
+        }
+    }
     function test_whitespace() {
         let ss = " 1234"
         const ss2 = removeLeadingWhitespace(ss)
@@ -125,6 +167,7 @@ type TNode = Tree.TreeNode
 if (typeof module !== 'undefined' && !module.parent) {
     // test_factor()
     // test_parser()
+    testMany()
     test_factor_times_term()
     test_term_plus_expression()
     test_whitespace()

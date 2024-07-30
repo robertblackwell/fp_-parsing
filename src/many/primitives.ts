@@ -1,61 +1,18 @@
-import * as Tree from "../tree"
+import * as STM from "./strings_and_things_monad"
 
-import * as AST from "../ast_functions"
-import {Ast} from "../ast_functions"
+import {ParserResult, Parser, makeJustParserResult, bindM2, choice} from "./strings_and_things_monad"
 
-import * as Maybe from "./maybe_v2"
-import * as PM from "./parser_monad"
-import {PReturnObj, ParserResult, Parser, makeJustParserResult, eta, bind} from "./parser_monad"
-
-/**
- * Create a parser that recognizes a single character that satisfies a predicate
- */
 export function createPredicateParser(predicate: (ch: string) => boolean): Parser<string> {
-    return function(sinput: string){
+    return function(sinput: string): ParserResult<string>{
         if((sinput.length == 0) || (! predicate(sinput.substring(0,1))))
-            return Maybe.nothing()
+            return []
         const value = sinput.substring(0,1)
         const remainder = sinput.slice(1)
-        return makeJustParserResult(value, remainder)
+        const rr: ParserResult<string> = [[value, remainder]]
+        return rr
     }
 }
-
 /**
- * choice and chocieN - combine 2 or more parsers by selecting the first one that succeeds
- */
-export const choice = parser_or
-export function parser_or<T,R>(p1: Parser<T>,  p2: Parser<R>): Parser<T|R> {
-    return function(sinput: string): ParserResult<T|R> {
-        const res1:ParserResult<T> = p1(sinput)
-        if(Maybe.isNothing(res1)) {
-            const res2 = p2(sinput)
-            if(Maybe.isNothing(res2))
-                return Maybe.nothing()
-            else {
-                const {result:v2, remaining:r2}:PReturnObj<T|R> = Maybe.getValue(res2)
-                return makeJustParserResult((v2), r2)
-            }
-        }
-        const {result:v1, remaining:r1}:PReturnObj<T> = Maybe.getValue(res1)
-        return makeJustParserResult((v1), r1)
-    }
-}
-export const choiceN = parser_or_N
-function parser_or_N(ps: Array<Parser<Ast>>, input: string): ParserResult<Ast> {
-    if(ps.length == 0) {
-        return Maybe.nothing()
-    }
-    const res1 = ps[0](input)
-    if(Maybe.isNothing(res1)) {
-        return parser_or_N(ps.slice(1), input)
-    }
-    const {result: r1, remaining: rem1} = Maybe.getValue(res1)
-    return makeJustParserResult((r1), rem1)
-}
-
-/**
- * Apply a single parser `zero or more times` or `one or more times``
- * 
  * This is interesting. The point of this parser is:
  * 
  * -    it only gets called when many1(single) fails
@@ -66,83 +23,54 @@ function parser_or_N(ps: Array<Parser<Ast>>, input: string): ParserResult<Ast> {
  * parsed bits if `T[]` would be lost
  */
 function stopRecursionMarker<T>(sinput:string):ParserResult<T[]> {
-    return PM.makeJustParserResult([], sinput)
+    return [[[], sinput]]
 }
 /**
  * Note that an alternative definition of the `stopRecursionMarker` function is:
  */
-const stopRecursionMarker2 = PM.eta([])
+const stopRecursionMarker2 = STM.eta([])
 
 export function many<T>(single: Parser<T>): Parser<T[]> {
     return function(sinput: string): ParserResult<T[]> {
-        const r = choice<T[], T[]>(many1(single), stopRecursionMarker2)(sinput)
+        const r = choice<T[]>(many1(single), stopRecursionMarker2)(sinput)
         return r
     }
 }
 export function many1<T>(single: Parser<T>): Parser<T[]> {
     const ms: Parser<T[]> = many(single)
     return function(sinput: string)  { 
-        const x = PM.bindM2<T, T[], T[]>(single, ms, (t:T, ts: T[]) => {
-            const x2 = PM.eta([...[t], ...ts])
+        const x = bindM2<T, T[], T[]>(single, ms, (t:T, ts: T[]) => {
+            const x2 = STM.eta([...[t], ...ts])
             return x2
         })(sinput)
         return x
     }
 }
 
-/**
- * specilaize `many` and `many` to string parsers
- */
-
-export const create_OneOrMoreParser = create_OneOrMoreParser_3
-
-/**
- * There are 3 versions of the following function as I developed the final solution in steps
- * and I did not want to loose the intermediate steps
- */
-
-export function create_OneOrMoreParser_3(singleChParser: Parser<string>): Parser<string> {
-    return bind(many1(singleChParser), (cs: string[]) => eta(cs.join("")))
-}
-
-export function create_OneOrMoreParser_2(singleChParser: Parser<string>): Parser<string> {
-    const pp = many1(singleChParser)
-    const ff = (cs: string[]) => eta(cs.join(""))
-    const q = bind(pp, ff)
-
-    return function(sinput: string): ParserResult<string> {
-        const r = pp(sinput)
-        if(Maybe.isNothing(r)) {
-            return Maybe.nothing()
-        } else {
-            const {result: cs, remaining: rem} = Maybe.getValue(r)
-            return makeJustParserResult(cs.join(""), rem)
-        }
-    }
-}
-export function create_OneOrMoreParser_1(singleChParser: Parser<string>): Parser<string> {
-    return function manyTimes(sinput: string): ParserResult<string> {
+export function create_OneOrMoreParser(singleChParser: Parser<string>): Parser<string[]> {
+    return function manyTimes(sinput: string): ParserResult<string[]> {
         let s = sinput.slice(0)
-        const mr1 = singleChParser(s)
+        const mr1: [string, string][] = singleChParser(s)
         let parse_result = ""
-        if(Maybe.isNothing(mr1)) {
-            return Maybe.nothing()
+        if(mr1.length === 0) {
+            return []
         } else {
             // const pair = Maybe.get_value(r)
-            const {result: first_digit_as_string, remaining: r1}: PReturnObj<string> = Maybe.getValue(mr1)
+            const [ch, rem1] = mr1[0]
             // const remain = pair.remaining_input
-            const mr2 = manyTimes(r1)
-            if(Maybe.isNothing(mr2)) {
-                return makeJustParserResult(first_digit_as_string, r1)
+            const mr2 = manyTimes(rem1)
+            if(mr2.length === 0) {
+                return [[[ch], rem1]]
             }
             // const result_pair = Maybe.get_value(r2)
-            const {result: subsequent_digits_as_string, remaining: r2}: PReturnObj<string> = Maybe.getValue(mr2)
+            const [chs, rem2] = mr2[0]
             // const subsequent_digits_as_string = Maybe.getValue(v2)
-            const parse_result_string = first_digit_as_string  + subsequent_digits_as_string
-            return makeJustParserResult(parse_result_string, r2) 
+            const parse_result_string: [string[], string][] = [[[...[ch], ...chs], rem2]]
+            return parse_result_string
         }
     }
 }
+
 
 export const parseAdditionSign = whitespaceIfy(createPredicateParser((s) => (s === "+")))
 export const parseMultiplySign = whitespaceIfy(createPredicateParser((s) => (s === "*")))
@@ -172,27 +100,12 @@ export function whitespaceIfy<T>(p: Parser<T>): Parser<T> {
     }
 }
 
-export function parseNumber(sinput: string): ParserResult<string> {
+export function parseNumber(sinput: string): ParserResult<string[]> {
     const digitParser = createPredicateParser((ss: string) => (ss.substring(0, 1).match(/[0-9]/g) !== null))
     const numParser = create_OneOrMoreParser(digitParser)
     const r = numParser(sinput)
     return r
 }
-
-/**
- * Now do sequences of dissimilar parsers
- */
-export function followedBy<T, U>(p1: Parser<T>, p2: Parser<U>): Parser<[T,U]> {
-    return PM.bindM2(p1, p2, (t:T, u:U) => PM.eta([t, u]))
-}
-
-export function followedBy3<R,S,T,U>(pr: Parser<R>, ps: Parser<S>, pt: Parser<T>, f:(r: R, s:S, t:T) => U):Parser<U> {
-    return PM.bind(pr, (r:R) => PM.bind(ps, (s:S) => PM.bind(pt, (t:T) => PM.eta(f(r,s,t)))))
-    // which is the same as
-    // return PM.bindM3(pr, ps, pt, (x: R, y: S, z: T) => PM.eta(f(x,y,z)))
-}
-
-
 
 // export function followedBy<T, U>(p1: Parser<T>, p2: Parser<U>): Parser<[T,U]> {
 //     function f(t:T, u:U): Parser<[T,U]> {

@@ -26,3 +26,6 @@ https://mail.haskell.org/pipermail/haskell-cafe/2009-October/068358.html
 https://stackoverflow.com/questions/7220436/good-examples-of-not-a-functor-functor-applicative-monad
 
 https://www.dcc.fc.up.pt/~pbv/aulas/tapf/handouts/applicative.html
+
+// this one discusses parser combinations
+https://www.dcc.fc.up.pt/~pbv/aulas/tapf/handouts/parsing.html
