@@ -51,7 +51,7 @@ of the Maybe monad.
 */
 //@markdown_end
 //@code_start
-import * as Maybe from './maybe_v1'
+import * as Maybe from '../version_1/maybe_v1'
 
 // export type ParserResult<T> = {maybe_result: Maybe.Type<T>, remaining: string}
 export type ParserResult<T> = Maybe.Type<{result: T, remaining: string}>
@@ -468,6 +468,29 @@ array operation. Such that a list of parsers can be applied one after the other.
 //@file_end
 //@file_start junk.md
 //@ignore_start
+import * as Tree from "../tree"
+type TNode = Tree.TreeNode
+export function sameParserResult(label: string, actual: ParserResult<TNode>, expected: ParserResult<TNode>): boolean {
+    if((!Maybe.isNothing(actual)) && (Maybe.isNothing(expected))) {
+        console.log([`${label}: failed disagree re isNothing()`, 'expected is nothing', 'actual is not'])
+        return false
+    }
+    if((Maybe.isNothing(actual) && (!Maybe.isNothing(expected)))) {
+        console.log([`${label}: failed disagree re isNothing()`,'expected is NOT nothing','actual is nothing'])
+        return false
+    }
+    if((!Maybe.isNothing(actual) && !Maybe.isNothing(expected))) {
+        const {result: r1, remaining: rem1} = Maybe.getValue(actual)
+        const {result: r2, remaining: rem2} = Maybe.getValue(expected)
+        const s1 = Tree.treeAsString(r1)
+        const s2 = Tree.treeAsString(r2)
+        const sequal = (s1.replace(/\s/g,"") === s2.replace(/\s/g,""))
+        console.log(`actual exp: ${s1} expected exp: ${s2} OK: ${s1 === s2}  ${sequal}`)
+        return (s1.replace(/\s/g,"") === s2.replace(/\s/g,""))
+    }
+    return true
+}
+
 /**
  * Lets test some of the above functions
  */

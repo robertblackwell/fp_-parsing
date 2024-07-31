@@ -1,42 +1,34 @@
 import {Ast} from "../ast_functions"
 import * as Tree from "../tree"
 import * as ST from "../simple_test/simple_test"
-import * as Maybe from "../version_2/maybe_v2"
 import {
-    Parser, 
     ParserResult, 
-    PReturnObj,
     makeJustParserResult,
-    bindM2, bind, eta
-} from "../version_2/parser_monad"
+} from "../version_3/parser_monad"
 import {
-    parseNumber, 
-    whitespaceIfy, 
-    choice, choiceN,
-    many, many1,
+    many,
     createPredicateParser,
-    stripLeadingWhitespace, 
     removeLeadingWhitespace,
     create_OneOrMoreParser_3,
-    followedBy, followedBy3
-} from "../version_2/primitives"
+} from "../version_3/primitives"
 import {
     expression, 
     term_plus_expression_1,
     factor, factor_times_term_1,
-    parseNumberExp, parseBracketExp
-} from "../version_2/expression_parser"
+    parseNumberExp,
+} from "../version_3/expression_parser"
 type TNode = Tree.TreeNode
 /******************************************************************************/
 // Tests 
 /*******************************************************************************/
 import {sameParserResult} from "./parser_monad"
+
 ST.describe("test_factor", () => {
     {
         const r1 = factor(" 2")
-        ST.assert.isTrue(!Maybe.isNothing(r1))
-        if(!Maybe.isNothing(r1)) {
-            const {result: r1_1, remaining: r1_2} = Maybe.getValue(r1)
+        ST.assert.isTrue(r1 !== null)
+        if(r1 !== null) {
+            const [r1_1, r1_2] = r1
             ST.assert.isTrue(Tree.treeAsString(r1_1) === "2")
             ST.assert.isTrue(r1_2 == "")
         } else {
@@ -45,8 +37,9 @@ ST.describe("test_factor", () => {
     }
     {
         const r1 = factor(" 2345")
-        if(!Maybe.isNothing(r1)) {
-            const {result: r1_1, remaining: r1_2} = Maybe.getValue(r1)
+        ST.assert.isTrue(r1 !== null)
+        if(r1 !== null) {
+            const [r1_1, r1_2] = r1
             ST.assert.isTrue(Tree.treeAsString(r1_1) === "2345")
             ST.assert.isTrue(r1_2 == "")
         } else {
@@ -59,7 +52,7 @@ ST.describe("test parsers", () => {
     ST.assert.isTrue(
         sameParserResult("factor_times_term_1(\"2 + 3\")",
             factor_times_term_1("2 + 3"),
-            Maybe.nothing())
+            null)
     )
 
     ST.assert.isTrue(
@@ -100,8 +93,8 @@ ST.describe("test_whitespace", () => {
     ST.assert.isTrue("hh" ==  removeLeadingWhitespace("hh"))
 })
 ST.describe("test_anumber", () => {
-    sameParserResult("test a number ''", parseNumberExp(""), Maybe.nothing())
-    sameParserResult("aaa", parseNumberExp("aaa"), Maybe.nothing())
+    sameParserResult("test a number ''", parseNumberExp(""), null)
+    sameParserResult("aaa", parseNumberExp("aaa"), null)
     sameParserResult("1", parseNumberExp("1"), makeJustParserResult(Tree.NumberNode.make(1), ""))
     sameParserResult("123", parseNumberExp("123"), makeJustParserResult(Tree.NumberNode.make(123), ""))
     sameParserResult("123 ", parseNumberExp("123 "), makeJustParserResult(Tree.NumberNode.make(123), " "))
@@ -109,21 +102,6 @@ ST.describe("test_anumber", () => {
     sameParserResult("  123X ", parseNumberExp("  123X "), makeJustParserResult(Tree.NumberNode.make(123), "X "))
 })
 ST.describe("test_expr", () => {
-    function test_one(expression_str: string)
-    {
-        console.log(`testing string ${expression_str}`)
-        const res1 = expression(expression_str)
-        let string_rep = ""
-        let remstr = ""
-        if(Maybe.isNothing(res1)) {
-            string_rep = "nothing"
-        } else {
-            const {result: r, remaining: rem} = Maybe.getValue(res1)
-            string_rep = Tree.treeAsString(r)
-            remstr = rem
-        }
-        console.log(`input ${expression_str} maybe_result ${string_rep} rem: ${remstr} \n`)
-    }
     sameParserResult("", expression("1 + 2"), makeJustParserResult(Tree.AddNode.make(Tree.NumberNode.make(1), Tree.NumberNode.make(2)),""))
     sameParserResult("", expression("2 * 3"), makeJustParserResult(Tree.MultNode.make(Tree.NumberNode.make(2), Tree.NumberNode.make(3)),""))
     sameParserResult("", expression(" 1 + 2"), makeJustParserResult(Tree.AddNode.make(Tree.NumberNode.make(1), Tree.NumberNode.make(2)),""))

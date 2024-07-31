@@ -1,11 +1,8 @@
-import * as Tree from "../tree"
-
-import * as AST from "../ast_functions"
 import {Ast} from "../ast_functions"
 
-import * as Maybe from "./maybe_v2"
-import * as PM from "./parser_monad"
-import {PReturnObj, ParserResult, Parser, makeJustParserResult, eta, bind} from "./parser_monad"
+import * as Maybe from "../version_2/maybe_v2"
+import * as PM from "../version_2/parser_monad"
+import {PReturnObj, ParserResult, Parser, makeJustParserResult, eta, bind} from "../version_2/parser_monad"
 
 /**
  * Create a parser that recognizes a single character that satisfies a predicate

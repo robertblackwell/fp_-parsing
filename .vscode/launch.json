@@ -4,6 +4,25 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+            {
+            "type": "node",
+            "request": "launch",
+            "name": "test version 1",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "args": [
+                "--no-timeouts",
+                "--colors",
+                "--inspect-brk",
+                "${workspaceFolder}/tests/version_1_numbers.spec.ts",
+            ],
+            "runtimeArgs": [
+                "--experimental-specifier-resolution=node",
+                "loader","ts-node/esm"
+            ],
+            "internalConsoleOptions": "openOnSessionStart",
+            "stopOnEntry": true,
+            "console": "integratedTerminal",
+        },
         {
             "name": "Current TS File",
             "type": "node",
@@ -70,14 +89,9 @@
             "type": "node",
             "request": "launch",
             "name": "A Single Mocha test",
-            "program": "${workspaceFolder}/node_modules/.bin/mocha",
+            "program": "${workspaceFolder}/node_modules/.bin/ts-mocha",
             "args": [
-                "-r",
-                "ts-node/register",
-                "--timeout",
-                "999999",
-                "--colors",
-                "${workspaceFolder}/test/mocha.spec.ts",
+                "${workspaceFolder}/tests/version_1_number.spec.ts",
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen",

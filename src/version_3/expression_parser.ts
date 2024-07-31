@@ -1,23 +1,20 @@
 import * as Tree from "../tree"
 import * as AST from "../ast_functions"
 import {
-    Parser, ParserResult, PReturnObj, makeJustParserResult, bindM3, bindM2, bind, eta
-} from "../version_2/parser_monad"
-
-import * as Maybe from "../version_2/maybe_v2"
+    ParserResult, bind, eta
+} from "../version_3/parser_monad"
 
 import {
-    choice, choiceN, 
+    choice, 
     stripLeadingWhitespace,
     parseNumber,
     parseMultiplySign,
     parseAdditionSign,
     parseOpenBracket, 
     parseCloseBracket,
-    followedBy,
     followedBy3,
     whitespaceIfy
-} from "../version_2/primitives"
+} from "../version_3/primitives"
 
 const removeLeadingWhitespace = stripLeadingWhitespace
 

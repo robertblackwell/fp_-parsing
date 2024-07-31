@@ -1,10 +1,4 @@
 //@file_start maybe_v2.md
-//@ignore_start
-// import * as PP from "./parser_pair"
-// import * as PR from "./parser_result"
-// import * as PT from "./parser_type"
-import * as Maybe from "../version_2/maybe_v2"
-//@ignore_end
 //@markdown_start
 /*
 Haskel definition of a Monad
@@ -24,24 +18,16 @@ mfab <*> ma  =  do { fab <- mfab ; a <- ma ; return (fab a) }
 */
 //@markdown_end
 //@code_start
-export type PReturnObj<T> = {result:T, remaining:string}
-export type ParserResult<T> = Maybe.Type<PReturnObj<T>>
+export type ParserResult<T> = [T, string] | null
 
-/**
- * May have to change the definition of ParserResult
-export type PR<T> = Maybe<[T, string]> 
-*/
-export function makeJustParserResult<T>(r: T, rem: string) {
-    return Maybe.just({result: r, remaining: rem})
+export function makeJustParserResult<T>(r: T, rem: string): ParserResult<T> {
+    return [r, rem]
 }
 export function makeNothingParserResult<T>() {
-    return Maybe.nothing()
+    return null
 }
 export type Parser<T> = (sinput: string) => ParserResult<T>
 
-function compose<X, Y>(f: (s:string) => X, g: (x:X) => Y): (s:string) => Y {
-    return (s: string) => g(f(s))
-}
 //@code_end
 /**
  * Claim that the "type constructor" PT.ParserType<T> is an applicative functor.
@@ -58,11 +44,13 @@ export function fmap<A,B>(f:(a:A)=>B): (p: P<A>) => P<B> {
     return function(p:P<A>): P<B> {
         return function(s:string): ParserResult<B> {
             const r1 = p(s)
-            if(Maybe.isNothing(r1)) {
-                return Maybe.nothing()
+            if(r1 === null) {
+                return makeNothingParserResult()
+            } else{
+                const [res1, rem1]: [A, string] = r1
+                const b = f(res1)
+                return makeJustParserResult(b, rem1)
             }
-            const {result: res1, remaining: rem1} = Maybe.getValue(r1)
-            return makeJustParserResult(f(res1), rem1)
         }
     }
 }
@@ -92,12 +80,11 @@ export function pure<A>(a: A): P<A> {
 export function mu<A>(f: P<P<A>>): P<A> {
     const rr = function(s: string):ParserResult<A> {
         const fs: ParserResult<Parser<A>> = f(s)
-        if(Maybe.isNothing(fs))
-            return Maybe.nothing<PReturnObj<A>>()
+        if(fs === null)
+            return makeNothingParserResult()
         else {
-            const {result: fv, remaining: fstr}: PReturnObj<Parser<A>> = Maybe.getValue(fs)
+            const [fv, fstr]:[Parser<A>, string] = fs
             const rr: ParserResult<A> = fv(fstr)
-            // const r = Maybe.just(fv(fstr))
             return rr
         }
     }
@@ -192,42 +179,43 @@ export function apply<A,B>(f: P<F<A,B>>, x:P<A>): P<B> {
     return res
 }
 /**
+ * 
+ * NOTE : the choice function is more explicit and cannot use the Maybe.chocie function
+ * 
  * This function implements the "|" operator in a BNF notation.
  * 
  * It also makes the P monad into an `Alternative`
  */
 export function choice<A>(p1: P<A>, p2: P<A>): P<A> {
-    return (s: string) => Maybe.choice(p1(s), p2(s))
-}
-
-function test() {
-    console.log(`hello`)
+    return (s: string) => {
+        const r1 = p1(s)
+        return (r1) ? r1: p2(s)
+    }
 }
 
 //@file_start junk.md
 //@ignore_start
 import * as Tree from "../tree"
 type TNode = Tree.TreeNode
-export function sameParserResult(label: string, actual: ParserResult<TNode>, expected: ParserResult<TNode>): boolean {
-    if((!Maybe.isNothing(actual)) && (Maybe.isNothing(expected))) {
+
+export function sameParserResult(label: string, actual: ParserResult<TNode>, expected: ParserResult<TNode>) {
+    if( ((actual !== null) && (expected === null))) {
         console.log([`${label}: failed disagree re isNothing()`, 'expected is nothing', 'actual is not'])
         return false
     }
-    if((Maybe.isNothing(actual) && (!Maybe.isNothing(expected)))) {
+    if( ((actual === null) && (expected !== null))) {
         console.log([`${label}: failed disagree re isNothing()`,'expected is NOT nothing','actual is nothing'])
         return false
     }
-    if((!Maybe.isNothing(actual) && !Maybe.isNothing(expected))) {
-        const {result: r1, remaining: rem1} = Maybe.getValue(actual)
-        const {result: r2, remaining: rem2} = Maybe.getValue(expected)
-        const s1 = Tree.treeAsString(r1)
-        const s2 = Tree.treeAsString(r2)
-        console.log(`actual exp: ${s1} expected exp: ${s2} OK: ${s1 === s2}`)
-        return (s1.replace(/\s/g,"") === s2.replace(/\s/g,""))
+    if((actual !== null) && (expected !== null)) {
+    const [r1, rem1] = actual
+    const [r2, rem2] = expected
+    const s1 = Tree.treeAsString(r1)
+    const s2 = Tree.treeAsString(r2)
+    console.log(`actual exp: ${s1} expected exp: ${s2}`)
+    return (s1.replace(/\s/g,"") === s2.replace(/\s/g,""))
     }
     return true
 }
 //@ignore_end
 //@file_end
-
-// test()

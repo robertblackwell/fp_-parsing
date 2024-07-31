@@ -1,5 +1,6 @@
+
 import * as Tree from "../../src/tree"
-import * as Maybe from "./maybe_v1"
+import * as Maybe from "../version_1/maybe_v1"
 import {
     Parser, 
     ParserResult, 
@@ -9,134 +10,172 @@ import {
     whitespaceIfy, 
     createPredicateParser,
     stripLeadingWhitespace
-} from "./parsing_intro"
+} from "../version_1/parsing_intro"
 import {
     expression, 
-    term_plus_expression_1, term_plus_expression_2,
+    term, term_only, term_plus_expression_1, term_plus_expression_2,
     factor, factor_times_term_1, factor_times_term_2,
     parseNumberExp, parseBracketExp, removeLeadingWhitespace
-} from "./expression_parser_version_1"
+} from "../version_1/expression_parser_version_1"
+
+import * as ST from "../simple_test/simple_test"
+
 type TNode = Tree.TreeNode
 /******************************************************************************/
 // Tests 
 /*******************************************************************************/
     // this is the main module
-    function verify_parser_result(actual: ParserResult<TNode>, expected: ParserResult<TNode>) {
-        // const {maybe_result: r1, remaining: rem1} = actual
-        // const {maybe_result: r2, remaining: rem2} = expected
-        // console.log(`actual rem: ${rem1} expected rem: ${rem2}`)
-        if( ((!Maybe.isNothing(actual) && Maybe.isNothing(expected)) || (Maybe.isNothing(actual) && !Maybe.isNothing(expected)))) {
-            console.log(`failed disagree re isNothing()`)
-        }
-        if((!Maybe.isNothing(actual) && !Maybe.isNothing(expected))) {
-        const {result: r1, remaining: rem1} = Maybe.getValue(actual)
-        const {result: r2, remaining: rem2} = Maybe.getValue(expected)
-        const s1 = Tree.treeAsString(r1)
-        const s2 = Tree.treeAsString(r2)
-        console.log(`actual exp: ${s1} expected exp: ${s2}`)
-        }
-    }
-    function test_parser() {
-        test_factor_times_term()
-        test_term_plus_expression()
-        // test_add()
-        test_whitespace()
-        test_anumber() 
-    }
-    function test_factor() {
-        const r1 = factor(" 2")
-        const r2 = factor(" 2345")
-    }
-    function test_factor_times_term() {
+import {sameParserResult} from "./parsing_intro"
 
-        verify_parser_result(
+ST.describe("test_factor", () => {
+    {
+        const r1 = factor(" 2")
+        ST.assert.isTrue(!Maybe.isNothing(r1))
+        if(!Maybe.isNothing(r1)) {
+            const {result: r1_1, remaining: r1_2} = Maybe.getValue(r1)
+            ST.assert.isTrue(Tree.treeAsString(r1_1) === "2")
+            ST.assert.isTrue(r1_2 == "")
+        } else {
+            ST.assert.isTrue(false)
+        }
+    }
+    {
+        const r1 = factor(" 2345")
+        if(!Maybe.isNothing(r1)) {
+            const {result: r1_1, remaining: r1_2} = Maybe.getValue(r1)
+            ST.assert.isTrue(Tree.treeAsString(r1_1) === "2345")
+            ST.assert.isTrue(r1_2 == "")
+        } else {
+            ST.assert.isTrue(false)
+        }
+    }
+})
+ST.describe("test parsers", () => {
+
+    ST.assert.isTrue(
+        sameParserResult("factor_times_term_1(\"2 + 3\")",
             factor_times_term_1("2 + 3"),
             Maybe.nothing())
+    )
 
-        verify_parser_result(
-            factor_times_term_2("2 + 3"),
-            Maybe.nothing())
+    ST.assert.isTrue(
+        sameParserResult("factor_times_term_2(\"2 + 3\")",
+        factor_times_term_2("2 + 3"),
+        Maybe.nothing())
+    )
 
-        verify_parser_result(
+    ST.assert.isTrue(
+        sameParserResult("factor_times_term_1(\"2 * 3\")",
             factor_times_term_1("2 * 3"), 
             makeJustParserResult(
-                Tree.MultNode.make(Tree.NumberNode.make(2), Tree.NumberNode.make(3)), 
+            Tree.MultNode.make(Tree.NumberNode.make(2), Tree.NumberNode.make(3)), 
             "")
         )
-        verify_parser_result(
+    )
+    ST.assert.isTrue(
+        sameParserResult("factor_times_term_1(\"2 * 3\")",
             factor_times_term_1("2 * 3"), 
             makeJustParserResult(
                 Tree.MultNode.make(Tree.NumberNode.make(2), Tree.NumberNode.make(3)), 
                 ""
             )
         )
-    }
-    function test_term_plus_expression() {
-        verify_parser_result(
+    )
+})
+ST.describe("test_term_plus_expression", () => {
+    ST.assert.isTrue(
+        sameParserResult("term_plus_expression_1(\"2 + 3\")",
             term_plus_expression_1(" 2 + 3"),
             makeJustParserResult(
                 Tree.AddNode.make(Tree.NumberNode.make(2), Tree.NumberNode.make(3)), 
                 ""
             )
         )
-        verify_parser_result(
+    )
+    ST.assert.isTrue(
+        sameParserResult("term_plus_expression_2(\"2 + 3\")",
             term_plus_expression_2(" 2 + 3"),
             makeJustParserResult(
                 Tree.AddNode.make(Tree.NumberNode.make(2), Tree.NumberNode.make(3)), 
                 ""
             )
         )
-    }
+    )
+})
 
-    function test_whitespace() {
-        let ss = " 1234"
-        const ss2 = removeLeadingWhitespace(ss)
-        const r1 = removeLeadingWhitespace("")
-        const r2 = removeLeadingWhitespace("  ff")
-        const r3 = removeLeadingWhitespace("hh")
-    }
-    function test_anumber() {
-        const r1 = parseNumberExp("")
-        const r2 = parseNumberExp("aaa")
-        const r3 = parseNumberExp("1")
-        const r4 = parseNumberExp("123")
-        const r5 = parseNumberExp("123 ")
-        const r6 = parseNumberExp("123X ")
-        const r7 = parseNumberExp("  123X ")
-    }
-    function test_expr() {
-        function test_one(expression_str: string)
-        {
-            console.log(`testing string ${expression_str}`)
-            const res1 = expression(expression_str)
-            let string_rep = ""
-            let remstr = ""
-            if(Maybe.isNothing(res1)) {
-                string_rep = "nothing"
-            } else {
-                const {result: r, remaining: rem} = Maybe.getValue(res1)
-                string_rep = Tree.treeAsString(r)
-                remstr = rem
-            }
-            console.log(`input ${expression_str} maybe_result ${string_rep} rem: ${remstr} \n`)
+ST.describe("test_whitespace", () => {
+    let ss = " 1234"
+    ST.assert.isTrue("1234" == removeLeadingWhitespace(ss))
+    ST.assert.isTrue("" ==  removeLeadingWhitespace(""))
+    ST.assert.isTrue("ff" ==  removeLeadingWhitespace("  ff"))
+    ST.assert.isTrue("hh" ==  removeLeadingWhitespace("hh"))
+})
+ST.describe("test_anumber", () => {
+    ST.assert.isTrue(sameParserResult("test a number ''", parseNumberExp(""), Maybe.nothing()))
+    ST.assert.isTrue(sameParserResult("aaa", parseNumberExp("aaa"), Maybe.nothing()))
+    ST.assert.isTrue(sameParserResult("1", parseNumberExp("1"), makeJustParserResult(Tree.NumberNode.make(1), "")))
+    ST.assert.isTrue(sameParserResult("123", parseNumberExp("123"), makeJustParserResult(Tree.NumberNode.make(123), "")))
+    ST.assert.isTrue(sameParserResult("123 ", parseNumberExp("123 "), makeJustParserResult(Tree.NumberNode.make(123), " ")))
+    ST.assert.isTrue(sameParserResult("123X", parseNumberExp("123X "), makeJustParserResult(Tree.NumberNode.make(123), "X")))
+    ST.assert.isTrue(sameParserResult("  123X ", parseNumberExp("  123X "), makeJustParserResult(Tree.NumberNode.make(123), "X ")))
+})
+ST.describe("test_expr", () => {
+    function test_one(expression_str: string)
+    {
+        console.log(`testing string ${expression_str}`)
+        const res1 = expression(expression_str)
+        let string_rep = ""
+        let remstr = ""
+        if(Maybe.isNothing(res1)) {
+            string_rep = "nothing"
+        } else {
+            const {result: r, remaining: rem} = Maybe.getValue(res1)
+            string_rep = Tree.treeAsString(r)
+            remstr = rem
         }
-        test_one("1 + 2")
-        test_one("2 * 3")
-        test_one(" 1 + 2")
-        test_one(" 2 * 3")
-        test_one("2*(3 + 4)")
-        test_one("2*(3 + 4) + 3 + 4* 5")
-        test_one(" 2*(3+4) + 3+4* 5")
-        test_one(" 2*(3+4)+ 3+4* 5")
+        console.log(`input ${expression_str} maybe_result ${string_rep} rem: ${remstr} \n`)
     }
-if (typeof module !== 'undefined' && !module.parent) {
-    // test_factor()
-    // test_parser()
-    test_factor_times_term()
-    test_term_plus_expression()
-    test_whitespace()
-    test_anumber()
-    test_expr()
-}
+    ST.assert.isTrue(sameParserResult("", expression("1 + 2"), makeJustParserResult(Tree.AddNode.make(Tree.NumberNode.make(1), Tree.NumberNode.make(2)),"")))
+    ST.assert.isTrue(sameParserResult("", expression("2 * 3"), makeJustParserResult(Tree.MultNode.make(Tree.NumberNode.make(2), Tree.NumberNode.make(3)),"")))
+    ST.assert.isTrue(sameParserResult("", expression(" 1 + 2"), makeJustParserResult(Tree.AddNode.make(Tree.NumberNode.make(1), Tree.NumberNode.make(2)),"")))
+    ST.assert.isTrue(sameParserResult("", expression(" 2 * 3"), makeJustParserResult(Tree.MultNode.make(Tree.NumberNode.make(2), Tree.NumberNode.make(3)),"")))
+    ST.assert.isTrue(sameParserResult("", expression("2*(3 + 4)"), 
+        makeJustParserResult(
+            Tree.MultNode.make(
+                Tree.NumberNode.make(2), 
+                Tree.BracketNode.make(
+                    Tree.AddNode.make(
+                            Tree.NumberNode.make(3), Tree.NumberNode.make(4)
+                    )
+                )
+            )
+            ,"")))
+
+    const makeExpectedParserResult = () => {
+        return makeJustParserResult(
+            Tree.AddNode.make(
+                Tree.AddNode.make(
+                    Tree.MultNode.make(
+                        Tree.NumberNode.make(2),
+                        Tree.BracketNode.make(
+                            Tree.AddNode.make(
+                                Tree.NumberNode.make(3), Tree.NumberNode.make(4)
+                            )
+                        )
+                    ),
+                    Tree.NumberNode.make(3)
+                ),
+                Tree.MultNode.make(
+                    Tree.NumberNode.make(4), Tree.NumberNode.make(5)
+                )
+            ), "")
+    }        
+    ST.assert.isTrue(sameParserResult("exp 1", expression("2*(3 + 4) + 3 + 4* 5"), makeExpectedParserResult()))
+    ST.assert.isTrue(sameParserResult("exp 2", expression(" 2*(3+4) + 3+4* 5"), makeExpectedParserResult()))
+    ST.assert.isTrue(sameParserResult("exp 3", expression(" 2*(3+4)+ 3+4* 5"), makeExpectedParserResult()))
+})
+
+ST.run()
+
 //@ignore_end
 //@file_end

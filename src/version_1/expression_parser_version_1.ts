@@ -11,7 +11,7 @@ type definitions
 //@markdown_end
 //@code_start
 import * as Tree from "../../src/tree"
-import * as Maybe from "./maybe_v1"
+import * as Maybe from "../version_1/maybe_v1"
 import {
     Parser, 
     ParserResult, 
@@ -20,7 +20,7 @@ import {
     parseNumber, 
     whitespaceIfy, 
     createPredicateParser,
-} from "./parsing_intro"
+} from "../version_1/parsing_intro"
 
 type TNode = Tree.TreeNode
 //@code_end
@@ -92,7 +92,7 @@ Again notice that there are 2 implementations of `factor_times_term
 //@markdown_end
 //@code_start
 export function term(sinput: string): ParserResult<TNode> {
-    const rr = choiceN([factor_times_term_1, factor_only], sinput)
+    const rr = choiceN([factor_times_term_1, factor_only], removeLeadingWhitespace(sinput))
     return rr
 }
 export function factor_times_term_1(sinput: string): ParserResult<TNode> {
@@ -106,7 +106,7 @@ export function factor_times_term_1(sinput: string): ParserResult<TNode> {
     if(Maybe.isNothing(res2)) {
         return Maybe.nothing()
     }
-    const {result: r2, remaining: rem2} = Maybe.getValue(res1)
+    const {result: r2, remaining: rem2} = Maybe.getValue(res2)
     const res3 = term(rem2)
     if(Maybe.isNothing(res3)) {
         return Maybe.nothing()
@@ -184,10 +184,10 @@ export function parseNumberExp(sinput: string) : ParserResult<TNode> {
 */
 //@markdown_end
 //@code_start
-const parseAdditionSign = whitespaceIfy(createPredicateParser((s) => (s === "+")))
-const parseMultiplySign = whitespaceIfy(createPredicateParser((s) => (s === "*")))
-const parseOpenBracket = whitespaceIfy(createPredicateParser((s) => (s === "(")))
-const parseCloseBracket = whitespaceIfy(createPredicateParser((s) => (s === ")")))
+export const parseAdditionSign = whitespaceIfy(createPredicateParser((s) => (s === "+")))
+export const parseMultiplySign = whitespaceIfy(createPredicateParser((s) => (s === "*")))
+export const parseOpenBracket = whitespaceIfy(createPredicateParser((s) => (s === "(")))
+export const parseCloseBracket = whitespaceIfy(createPredicateParser((s) => (s === ")")))
 
 export function removeLeadingWhitespace(s: string): string {
     if((s.length > 0) && (s.substring(0, 1) == " ")) {
@@ -204,7 +204,7 @@ export function removeLeadingWhitespace(s: string): string {
 /** 
  * Alternative - try each parser in order, on the original input, and return the result of the first that succeeds
 */
-const choiceN = parser_or
+export const choiceN = parser_or
 function parser_or(ps: Array<Parser<TNode>>, input: string): ParserResult<TNode> {
     if(ps.length == 0) {
         return Maybe.nothing()
