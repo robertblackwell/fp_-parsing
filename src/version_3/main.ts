@@ -93,20 +93,20 @@ ST.describe("test_whitespace", () => {
     ST.assert.isTrue("hh" ==  removeLeadingWhitespace("hh"))
 })
 ST.describe("test_anumber", () => {
-    sameParserResult("test a number ''", parseNumberExp(""), null)
-    sameParserResult("aaa", parseNumberExp("aaa"), null)
-    sameParserResult("1", parseNumberExp("1"), makeJustParserResult(Tree.NumberNode.make(1), ""))
-    sameParserResult("123", parseNumberExp("123"), makeJustParserResult(Tree.NumberNode.make(123), ""))
-    sameParserResult("123 ", parseNumberExp("123 "), makeJustParserResult(Tree.NumberNode.make(123), " "))
-    sameParserResult("123X", parseNumberExp("123X "), makeJustParserResult(Tree.NumberNode.make(123), "X"))
-    sameParserResult("  123X ", parseNumberExp("  123X "), makeJustParserResult(Tree.NumberNode.make(123), "X "))
+    ST.assert.isTrue(sameParserResult("test a number ''", parseNumberExp(""), null))
+    ST.assert.isTrue(sameParserResult("aaa", parseNumberExp("aaa"), null))
+    ST.assert.isTrue(sameParserResult("1", parseNumberExp("1"), makeJustParserResult(Tree.NumberNode.make(1), "")))
+    ST.assert.isTrue(sameParserResult("123", parseNumberExp("123"), makeJustParserResult(Tree.NumberNode.make(123), "")))
+    ST.assert.isTrue(sameParserResult("123 ", parseNumberExp("123 "), makeJustParserResult(Tree.NumberNode.make(123), " ")))
+    ST.assert.isTrue(sameParserResult("123X", parseNumberExp("123X "), makeJustParserResult(Tree.NumberNode.make(123), "X")))
+    ST.assert.isTrue(sameParserResult("  123X ", parseNumberExp("  123X "), makeJustParserResult(Tree.NumberNode.make(123), "X ")))
 })
 ST.describe("test_expr", () => {
-    sameParserResult("", expression("1 + 2"), makeJustParserResult(Tree.AddNode.make(Tree.NumberNode.make(1), Tree.NumberNode.make(2)),""))
-    sameParserResult("", expression("2 * 3"), makeJustParserResult(Tree.MultNode.make(Tree.NumberNode.make(2), Tree.NumberNode.make(3)),""))
-    sameParserResult("", expression(" 1 + 2"), makeJustParserResult(Tree.AddNode.make(Tree.NumberNode.make(1), Tree.NumberNode.make(2)),""))
-    sameParserResult("", expression(" 2 * 3"), makeJustParserResult(Tree.MultNode.make(Tree.NumberNode.make(2), Tree.NumberNode.make(3)),""))
-    sameParserResult("", expression("2*(3 + 4)"), 
+    ST.assert.isTrue(sameParserResult("", expression("1 + 2"), makeJustParserResult(Tree.AddNode.make(Tree.NumberNode.make(1), Tree.NumberNode.make(2)),"")))
+    ST.assert.isTrue(sameParserResult("", expression("2 * 3"), makeJustParserResult(Tree.MultNode.make(Tree.NumberNode.make(2), Tree.NumberNode.make(3)),"")))
+    ST.assert.isTrue(sameParserResult("", expression(" 1 + 2"), makeJustParserResult(Tree.AddNode.make(Tree.NumberNode.make(1), Tree.NumberNode.make(2)),"")))
+    ST.assert.isTrue(sameParserResult("", expression(" 2 * 3"), makeJustParserResult(Tree.MultNode.make(Tree.NumberNode.make(2), Tree.NumberNode.make(3)),"")))
+    ST.assert.isTrue(sameParserResult("", expression("2*(3 + 4)"), 
         makeJustParserResult(
             Tree.MultNode.make(
                 Tree.NumberNode.make(2), 
@@ -116,7 +116,7 @@ ST.describe("test_expr", () => {
                     )
                 )
             )
-            ,""))
+            ,"")))
 
     const makeExpectedParserResult = () => {
         return makeJustParserResult(
@@ -137,9 +137,9 @@ ST.describe("test_expr", () => {
                 )
             ), "")
     }        
-    sameParserResult("", expression("2*(3 + 4) + 3 + 4* 5"), makeExpectedParserResult())
-    sameParserResult("", expression(" 2*(3+4) + 3+4* 5"), makeExpectedParserResult())
-    sameParserResult("", expression(" 2*(3+4)+ 3+4* 5"), makeExpectedParserResult())
+    ST.assert.isTrue(sameParserResult("", expression("2*(3 + 4) + 3 + 4* 5"), makeExpectedParserResult()))
+    ST.assert.isTrue(sameParserResult("", expression(" 2*(3+4) + 3+4* 5"), makeExpectedParserResult()))
+    ST.assert.isTrue(sameParserResult("", expression(" 2*(3+4)+ 3+4* 5"), makeExpectedParserResult()))
 })
 
 ST.run()
